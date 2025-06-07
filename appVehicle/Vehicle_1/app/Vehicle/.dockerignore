@@ -1,0 +1,29 @@
+# Ignora repositório Git
+.git/
+.gitignore
+
+# Ignora documentações e licenças
+LICENSE
+README.md
+
+# Ignora python cache e bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Ignora ambiente virtual
+venv/
+.env
+*.env
+
+# Ignora logs e banco de dados local
+*.log
+*.sqlite3
+
+# Ignorar arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar testes
+tests/
+test/

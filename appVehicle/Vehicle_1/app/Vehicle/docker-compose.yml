@@ -1,0 +1,23 @@
+# version: "3.8"
+
+# Conexão usada para comunicação MQTT 
+
+# Comando de terminal para rodar o docker compose : docker compose run --rm vehicle 
+# docker compose run: Permite a inserção de entradas do usuario no terminal
+# --rm : Remove o conteiner após encerrar o programa
+# vehicle : Nome do conteiner
+
+
+services:
+  vehicle: # Nome do Client
+
+    build:
+      context: . # Diretório do Dockerfile
+      dockerfile: Dockerfile
+    
+    container_name: vehicle_client # Nome do container ao ser buildado
+    
+    stdin_open: true # Corresponde ao -i = modo interativo
+    tty: true # Corresponde ao -t = terminal virtual
+
+    network_mode: host
