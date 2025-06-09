@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 contract ReservationLedger {
-    enum public Status {CONFIRMED, COMPLETED, CANCELLED}
+    enum public Status {PENDING, CONFIRMED, COMPLETED, PAYED, CANCELLED}
 
     // Dados da Reserva:
     struct Reservation {
@@ -21,6 +21,7 @@ contract ReservationLedger {
         uint256 estimatedPrice; // Preço Estimado em "wei".
         address payable customer; // Endereço da Carteira do Cliente, Para Pagamentos.
         Status status;
+        Status paymentStatus;
     }
 
     // Dados da Transação:
@@ -107,10 +108,11 @@ contract ReservationLedger {
             durationHours: _durationHours,
             estimatedPrice: estimatedPrice,
             customer: payable(_customerAddress),
-            status: CONFIRMED
+            status: CONFIRMED,
+            paymentStatus: PENDING
         });
 
-        # Incrementando o ID Para a Próxima Reserva:
+        // Incrementando o ID Para a Próxima Reserva:
         nextReservationID++;
 
         // Emitindo a Notificação:
@@ -118,7 +120,7 @@ contract ReservationLedger {
             newReservationID,
             _chargingStationID,
             _chargingPointID,
-            msg.sender,
+            _customerAddress,
             _startDateTime,
             estimatedPrice
         );
@@ -132,13 +134,29 @@ contract ReservationLedger {
         // Verificando o Estado da Reserva:
         require(reservations[_reservationID].reservationID != 0, "ID da Reserva Inválido!");
         require(reservations[_reservationID].status != CANCELLED, "A Reserva Já Estava Cancelada!");
-        require(reservations[_reservationID].status == CONFIRMED, "A Reserva Não Está Ativa! Já Foi Efetuada!");
+        require(reservations[_reservationID].status == CONFIRMED, "A Reserva Já Foi Executada e Finalizada!");
         require(block.timestamp < reservations[_reservationID].startDateTime, "Não é Possível Cancelar uma Reserva Já Iniciada!");
 
         // Atualizando o Status da Reserva:
         reservations[_reservationID].status = CANCELLED;
 
         // Emitindo a Notificação:
-        emit ReservationStatusUpdated(_reservationID, false, true);
+        emit ReservationStatusUpdated(_reservationID, reservations[_reservationID].status);
     }
+
+    // Marcando uma Reserva como Concluída:
+    function completeReservation(uint256 _reservationID) public onlyCustomer(_reservationID) {
+        // Verificando o Estado da Reserva:
+        require(reservations[_reservationID].reservationID != 0, "ID da Reserva Inválido!");
+        require(reservations[_reservationID].status != CANCELLED, "A Reserva Está Cancelada!");
+        require(reservations[_reservationID].status == CONFIRMED, "A Reserva Já Foi Executada e Finalizada!");
+        require(block.timestamp > reservations[_reservationID].startDateTime, "A Reserva Ainda Não Foi Iniciada!");
+
+        // Atualizando o Status da Reserva:
+        reservations[_reservationID].status = COMPLETED;
+
+        // Emitindo a Notificação:
+        emit ReservationStatusUpdated(_reservationID, reservations[_reservationID].status);
+    }
+
 }
