@@ -32,6 +32,8 @@ class Vehicle:
          print(f"\n\t ID do veículo: {self.vid}")
          print(f"\n\t Placa: {self.licensePlate}")
          print(f"\n\t Crédito saldo : {self.moneyCredit}")
+         print(f"\n\t Bateria atual(kWh) : {self.currentEnergy}%")
+         print(f"\n\t Capacidade total da bateria(kWh) : {self.maximumBattery}%")
          
 
     def showReservations(self): # Método para visualizar todas as reservas efetuadas para o veículo

@@ -14,7 +14,7 @@ import threading
 @dataclass
 class VehicleClient:
 
-    def __init__(self, client, vehicle: Vehicle, Route: list):
+    def __init__(self, client, vehicle: Vehicle, Route: list, accountAddress: str):
         self.client = client
         self.serverHOST = 'localhost'
         self.serverPORT = 1883
@@ -31,7 +31,8 @@ class VehicleClient:
             "actualBatteryPercentage": vehicle.currentEnergy ,
             "batteryCapacity" : vehicle.maximumBattery ,
             "departureCityCodename" : Route[0] ,
-            "arrivalCityCodename" : Route[1]
+            "arrivalCityCodename" : Route[1],
+            "accountAddress" : accountAddress
         }
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message

@@ -29,6 +29,7 @@ from pathlib import Path
 import paho.mqtt.client as mqtt
 import json # Biblioteca usada para trabalhar com arquivos .json e importar dados fictícios para o sistema
 
+from web3 import Web3
 
 #--------------------------------------------------------------------------------------------------------------
 
@@ -49,8 +50,8 @@ BASE_DIR = Path(__file__).resolve().parent # Caminho do script "main.py"
 DATA_PATH = BASE_DIR / 'dataPath' # Caminho da pasta "dataPath"
 
 #Definindo o caminho de cada arquivo de dados
-dataFilePath = DATA_PATH / 'data.json'
-reservationsFilePath = DATA_PATH / 'reservations.json'
+dataFilePath = str(DATA_PATH / 'data.json')
+reservationsFilePath = str(DATA_PATH / 'reservations.json')
 
 # Métodos utilitários --------------------------------------------------------------------------
 
@@ -61,12 +62,85 @@ utility = VehicleUtility()
 
 #------------------------------------------------------------------------------------------------
 
-# Início do sistema
-
 repeat = True # Variavel usada para lidar com o fluxo de repetição do programa
 firstLogin = True # Variavel para indicar que apenas um login é preciso por execução.
 
 utility.clearTerminal()
+
+#------------------------------------------------------------------------------------------------
+
+# Definição de conta e dados fictícios
+
+fake = Faker("pt_BR") # Biblioteca usada para gerar dados aleatórios para usuário e veiculo
+            
+# User ----------------------------------------------------------------------------------------------------------------
+
+cpf = re.sub(r'\D', '', fake.cpf())
+            
+fakeName = []
+fakeName.append(fake.first_name())
+fakeName.append(fake.last_name())
+
+# Processo de normalização do nome gerado por faker, evitando assim formatações indesejadas de str por conta de acentos e cê-cedilha 
+genericName = utility.nomalizeName(fakeName)
+
+firstName = genericName[0]
+lastName = genericName[1]
+
+name = firstName + " " + lastName
+
+# Lista e variavel para determinar um domínio aleatório para o email
+genericDomain = ["@gmail.com", "@outlook.com", "@hotmail.com", "@yahoo.com", "@bol.com"]
+randomDomain = random.randint(0,4)
+
+email = re.sub(r"\s+", "", firstName.lower() + "." + lastName.lower() + genericDomain[randomDomain])
+
+# Senha aleatória 
+password = fake.password(length=8, special_chars=True, digits=True, upper_case=True, lower_case=True)
+# Parâmetros: Tamanho(8), caracteres especiais(s), números(s), letras maiusculas(s), letras minusculas(s)
+
+user = User(cpf = cpf, name = name, email = email , password = password)
+
+# Vehicle -------------------------------------------------------------------------------------------------------------
+
+genericID = random.randint(1,99999) # Gera um ID aleatório de 5 dígitos para o veículo
+vid = str(genericID).zfill(5)
+
+owner = user 
+licensePlate = fake.license_plate()
+moneyCredit = round(10000, 2) # O valor de crédito do veiculo inicia com R$10.000
+currentEnergy = 100
+
+maximumBattery = random.randint(51,100) # A capacidade máxima da bateria é gerada aleatoriamente entre o valor de 51 (potência mínima para o carro percorrer todas as rotas) a 100 (kWh) 
+
+vehicle = Vehicle(vid = vid, owner = owner, licensePlate = licensePlate, moneyCredit = moneyCredit, currentEnergy = currentEnergy, maximumBattery = maximumBattery)
+
+# ---------------------------------------------------------------------------------------------
+''' Revisar essa parte do código (R)
+
+reservations = []
+
+with open(reservationsFilePath, 'w') as f: # Limpando as reservas da conta anterior do arquivo "reservations.json" 
+    json.dump(reservations, f, indent=4)
+'''
+# ---------------------------------------------------------------------------------------------
+        
+vehicle.savingLoginData(dataFilePath) # Salvando os dados pertinentes
+# obs: O arquivo "data.json" tem os dados salvos
+
+#------------------------------------------------------------------------------------------------
+
+# Definindo conexão com ganache(Blockchain local)
+
+
+accountNumber = 0 # Número da conta Ganache utilizada pelo respectivo veículo(0-9). Deve ser alterado para cada conta nova de veículo.
+
+w3 = Web3(Web3.HTTPProvider("http://localhost:7545"))
+accountAddress = w3.eth.accounts[accountNumber]
+
+#------------------------------------------------------------------------------------------------
+
+# Início do sistema ->
 
 utility.startAnimation() # Função para gerar uma pequena animação na primeira execução do programa
     
@@ -75,130 +149,45 @@ time.sleep(2)
 
 while(repeat):
 
-    wrongOption = True # Variavel para lidar com opções incorretas inseridas no cenário login/registrar-se
+    wrongData = True  # Váriavel usada para permitir ou não a entrada no sistema de acordo com os dados de login e senha
 
-    while wrongOption:
-
-        userType = input("\t 1 - LOGIN / ENTRAR NA CONTA \n \t 2 - CRIAR CONTA \n\t ->")
-        utility.clearTerminal()
-
-        wrongData = True  # Váriavel usada para permitir ou não a entrada no sistema de acordo com os dados de login e senha
-
-        if userType == "1" :
+    ownerTemplate = User(cpf="", name="", email="", password="")
+    vehicleTemplate = Vehicle( vid= "", owner= ownerTemplate, licensePlate= "", moneyCredit= 0.0, currentEnergy= 0, maximumBattery=0)
             
-            #Criando template das 2 classes, para serem preenchidas com os dados 
-            ownerTemplate = User(cpf="", name="", email="", password="")
-            vehicle = Vehicle( vid= "", owner= ownerTemplate, licensePlate= "", moneyCredit= 0.0, currentEnergy= 0, maximumBattery=0)
-            
-            vehicle.loadingData(dataFilePath, reservationsFilePath)
+    vehicleTemplate.loadingData(dataFilePath, reservationsFilePath)
 
+    if firstLogin :
 
-            if firstLogin :
-
-                '''
-                Os dados são carregados de data.json, a partir da ultima geração de dados ficticios
-                obs: O arquivo "data.json" tem os dados salvos caso seja ppreciso conferir os dados para login
-                '''
-                #------------------------------------------------------------------------------------
+        '''
+        Os dados são carregados de data.json, a partir da ultima geração de dados ficticios
+        obs: O arquivo "data.json" tem os dados salvos caso seja ppreciso conferir os dados para login
+        '''
+        #------------------------------------------------------------------------------------
                 
-                while(wrongData):
+        while(wrongData):
 
-                    print(vehicle.owner.__dict__) # Printando as informações necessárias para LOGIN
-                    login = input("\n LOGIN (CPF ou Email): \t ")
-                    utility.clearTerminal()
-
-                    print(vehicle.owner.__dict__)
-                    password = input("\n SENHA: ")
-                    utility.clearTerminal()
-
-                    # Conferindo se os dados de login estão corretos
-                    if (login == vehicle.owner.cpf or login == vehicle.owner.email) and password == vehicle.owner.password:
-                        print (" Login realizado com sucesso ! ")
-                        time.sleep(3)
-                        utility.clearTerminal()
-                        wrongData = False
-                        firstLogin = False
-
-                    else :
-                        print(" Login ou senha incorreta. Tente novamente !")
-                        time.sleep(3)
-                        utility.clearTerminal()
-                        wrongData = True
-
-            wrongOption = False
-
-        elif userType == "2" :
-
-            # Definindo os objetos e as suas informações:
-
-            fake = Faker("pt_BR") # Biblioteca usada para gerar dados aleatórios para usuário e veiculo
-            
-            # User ----------------------------------------------------------------------------------------------------------------
-
-            cpf = re.sub(r'\D', '', fake.cpf())
-            
-            fakeName = []
-            fakeName.append(fake.first_name())
-            fakeName.append(fake.last_name())
-
-            # Processo de normalização do nome gerado por faker, evitando assim formatações indesejadas de str por conta de acentos e cê-cedilha 
-            genericName = utility.nomalizeName(fakeName)
-
-            firstName = genericName[0]
-            lastName = genericName[1]
-
-            name = firstName + " " + lastName
-
-            # Lista e variavel para determinar um domínio aleatório para o email
-            genericDomain = ["@gmail.com", "@outlook.com", "@hotmail.com", "@yahoo.com", "@bol.com"]
-            randomDomain = random.randint(0,4)
-
-            email = re.sub(r"\s+", "", firstName.lower() + "." + lastName.lower() + genericDomain[randomDomain])
-
-            # Senha aleatória 
-            password = fake.password(length=8, special_chars=True, digits=True, upper_case=True, lower_case=True)
-            # Parâmetros: Tamanho(8), caracteres especiais(s), números(s), letras maiusculas(s), letras minusculas(s)
-
-            user = User(cpf = cpf, name = name, email = email , password = password)
-
-
-            # Vehicle -------------------------------------------------------------------------------------------------------------
-
-            genericID = random.randint(1,99999) # Gera um ID aleatório de 5 dígitos para o veículo
-            vid = str(genericID).zfill(5)
-
-            owner = user 
-            licensePlate = fake.license_plate()
-            moneyCredit = round(10000, 2) # O valor de crédito do veiculo inicia com R$10.000
-            currentEnergy = 100
-
-            maximumBattery = random.randint(51,100) # A capacidade máxima da bateria é gerada aleatoriamente entre o valor de 51 (potência mínima para o carro percorrer todas as rotas) a 100 (kWh) 
-
-            vehicle = Vehicle(vid = vid, owner = owner, licensePlate = licensePlate, moneyCredit = moneyCredit, currentEnergy = currentEnergy, maximumBattery = maximumBattery)
-
-            # ---------------------------------------------------------------------------------------------
-
-            reservations = []
-
-            with open(reservationsFilePath, 'w') as f: # Limpando as reservas da conta anterior do arquivo "reservations.json" 
-                json.dump(reservations, f, indent=4)
-
-            # ---------------------------------------------------------------------------------------------
-        
-            vehicle.savingLoginData(dataFilePath) # Salvando os dados pertinentes
-            # obs: O arquivo "data.json" tem os dados salvos
-
-            # ---------------------------------------------------------------------------------------------
-            
-            wrongOption = True
-            
-        else :
-            wrongOption = True
-            print("Digite uma opção válida !")
-            time.sleep(2)
+            print(vehicleTemplate.owner.__dict__) # Printando as informações necessárias para LOGIN
+            login = input("\n LOGIN (CPF ou Email): \t ")
             utility.clearTerminal()
 
-            
+            print(vehicleTemplate.owner.__dict__)
+            password = input("\n SENHA: ")
+            utility.clearTerminal()
+
+            # Conferindo se os dados de login estão corretos
+            if (login == vehicleTemplate.owner.cpf or login == vehicleTemplate.owner.email) and password == vehicleTemplate.owner.password:
+                    print (" Login realizado com sucesso ! ")
+                    time.sleep(3)
+                    utility.clearTerminal()
+                    wrongData = False
+                    firstLogin = False
+
+            else :
+                print(" Login ou senha incorreta. Tente novamente !")
+                time.sleep(3)
+                utility.clearTerminal()
+                wrongData = True
+         
 
     wrongActions = True # Variavel de controle de opções de login
 
@@ -245,14 +234,14 @@ while(repeat):
                 if route == False:
                     print("\t Digite dados validos ! ")
 
-                    time.sleep()
+                    time.sleep(2)
                     utility.clearTerminal()
                     wrongCities = True
 
                 else:
                     wrongCities = False
                     client = mqtt.Client()
-                    vClient = VehicleClient(client, vehicle, route)
+                    vClient = VehicleClient(client, vehicle, route,accountAddress)
 
             
         elif reply == "2" : # Opção 2: Ver reservas

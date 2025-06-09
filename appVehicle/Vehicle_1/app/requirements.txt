@@ -1,3 +1,4 @@
 flask
 faker
 paho-mqtt
+web3==6.10.0
