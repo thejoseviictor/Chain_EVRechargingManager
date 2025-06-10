@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Serviço Para Compilar os Contratos:
+  contract_compiler:
+    build:
+      context: ./contracts
+      dockerfile: Dockerfile
+    volumes:
+      - ./build:/app/build # Persistindo os Dados Compilados, No diretório "build".
+    command: sh -c "solc --abi --bin --optimize --output-dir /app/build ReservationLedger.sol && echo 'Contrato Compilado Com Sucesso!'"
+    network_mode: host
+
+  # Serviço do Ganache:
+  ganache:
+    image: trufflesuite/ganache-cli:latest
+    container_name: ganache
+    env_file:
+      - ./ganache/.env
+    ports:
+      - "8545:8545"
+    command: ["ganache-cli", "--host", "${GANACHE_HOST}", "--port", "${GANACHE_PORT}", "-d"] # "-d" Gera as Mesmas Contas e Chaves Privadas, Na Mesma Ordem (De Forma Determinística).
+    network_mode: host
+    restart: always
+
+  # Serviço da API do Servidor "EcoCharge":
+  ecocharge:
+    build:
+      context: ./ev_recharging_servers/ecocharge
+      dockerfile: Dockerfile
+    container_name: ecocharge_server
+    depends_on:
+      - ganache
+      - contract_compiler
+    env_file:
+      - ./ev_recharging_servers/ecocharge/.env
+    volumes:
+      - ./build:/app/build # Permite Acessar o ABI e Bytecode Compilados.
+    network_mode: host
+    restart: always
+
+# Volume de Persistência dos Dados Compilados:
+volumes:
+  build:
