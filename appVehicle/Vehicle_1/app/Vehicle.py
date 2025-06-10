@@ -12,17 +12,18 @@ import time
 @dataclass
 class Vehicle:
 
-    vid: str
-    owner: User
-    licensePlate: str
-    moneyCredit: float
+    def __init__(self, vid, owner, licensePlate, moneyCredit, currentEnergy, maximumBattery):
+        self.vid: str
+        self.owner: User
+        self.licensePlate: str
+        self.moneyCredit: float
 
-    currentEnergy: int
-    maximumBattery : int
+        self.currentEnergy: int
+        self.maximumBattery : int
 
-    reservations = [] # Guarda as reservas
+        self.reservations = [] # Guarda as reservas
 
-    utility = VehicleUtility()
+        self.utility = VehicleUtility()
 
     def showInformations(self): # Método para visualização de dados de usúario
          print(f"\n\t Nome completo: {self.owner.name} ")

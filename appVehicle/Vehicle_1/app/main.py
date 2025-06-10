@@ -62,8 +62,16 @@ utility = VehicleUtility()
 
 #------------------------------------------------------------------------------------------------
 
-repeat = True # Variavel usada para lidar com o fluxo de repetição do programa
+repeat = True # Variavel usada para lidar com o fluxo de repetição do programa.
 firstLogin = True # Variavel para indicar que apenas um login é preciso por execução.
+
+contractAddress = "" # Variavel para receber o endereço de contrato do servidor
+route = []
+accountAddress = ""
+typeSubscribe = 0 # Variavel para definir o tipo de subscribe ( ou recebe o endereço de contrato(1) ou recebe a resposta do servidor ao realizar as reservas((2) )
+
+accountNumber = 0 # Número da conta Ganache utilizada pelo respectivo veículo(0-9). Deve ser alterado para cada conta nova de veículo.
+
 
 utility.clearTerminal()
 
@@ -129,11 +137,14 @@ vehicle.savingLoginData(dataFilePath) # Salvando os dados pertinentes
 # obs: O arquivo "data.json" tem os dados salvos
 
 #------------------------------------------------------------------------------------------------
+# Definindo conexão MQTT 
 
+client = mqtt.Client()
+#------------------------------------------------------------------------------------------------
+typeSubscribe = 1
+vClient = VehicleClient(client, vehicle, route, accountAddress, accountNumber, typeSubscribe)
+#------------------------------------------------------------------------------------------------
 # Definindo conexão com ganache(Blockchain local)
-
-
-accountNumber = 0 # Número da conta Ganache utilizada pelo respectivo veículo(0-9). Deve ser alterado para cada conta nova de veículo.
 
 w3 = Web3(Web3.HTTPProvider("http://localhost:7545"))
 accountAddress = w3.eth.accounts[accountNumber]
@@ -239,9 +250,11 @@ while(repeat):
                     wrongCities = True
 
                 else:
+
                     wrongCities = False
-                    client = mqtt.Client()
-                    vClient = VehicleClient(client, vehicle, route,accountAddress)
+
+                    typeSubscribe = 2
+                    vClient = VehicleClient(client, vehicle, route, accountAddress, accountNumber, typeSubscribe)
 
             
         elif reply == "2" : # Opção 2: Ver reservas

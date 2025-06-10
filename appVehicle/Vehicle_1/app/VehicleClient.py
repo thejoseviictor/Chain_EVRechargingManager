@@ -9,17 +9,18 @@ import os
 import socket
 import json
 import time
-import threading
 
 @dataclass
 class VehicleClient:
 
-    def __init__(self, client, vehicle: Vehicle, Route: list, accountAddress: str):
+    def __init__(self, client, vehicle: Vehicle, Route: list, accountAddress: str, accountNumber: int, typeSubscribe: int):
+        
         self.client = client
         self.serverHOST = 'localhost'
         self.serverPORT = 1883
         self.cost = 0.0
         self.reservations = []
+        self.typeSubscribe = typeSubscribe
 
         self.message = None
         self.request = None
@@ -31,9 +32,11 @@ class VehicleClient:
             "actualBatteryPercentage": vehicle.currentEnergy ,
             "batteryCapacity" : vehicle.maximumBattery ,
             "departureCityCodename" : Route[0] ,
-            "arrivalCityCodename" : Route[1],
-            "accountAddress" : accountAddress
+            "arrivalCityCodename" : Route[1] ,
+            "accountAddress" : accountAddress ,
+            "accountNumber" : accountNumber
         }
+
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.client.on_publish = self.on_publish
@@ -45,45 +48,50 @@ class VehicleClient:
         self.client.loop_start()
 
 
-
     # Método "on_connect": Estabelece a comunicação com o servidor para receber as reservas realizadas pelo servidor(es)
     def on_connect(self, client, userdata, flags, rc):
 
         if rc == 0:
             print(f" \t Conexão estabelecida ! ")
-            self.client.subscribe("server/create_reservations/vehicle") # Realiza a inscrição para receber o dado esperado
+            
+            if self.typeSubscribe == 1 :
+            
+                self.client.subscribe("server/receive_contractAddress/vehicle") # Realiza a inscrição para receber endereço de contrato
+            
+            else:
+                
+                self.client.subscribe("server/create_reservations/vehicle") # Realiza a inscrição para receber resposta de reservas efetuadas ou não
 
-            # Cria um json baseado no dicionário "vData" e envia as informações para o servidor correspondente.
-            self.client.publish("vehicle/create_reservations/server", json.dumps(self.vData))
-
+                # Cria um json baseado no dicionário "vData" e envia as informações para o servidor correspondente.
+                self.client.publish("vehicle/create_reservations/server", json.dumps(self.vData))
+        
         else:
             print(f" \u274C Falha na conexão. Código de retorno: {rc}")
-            #time.sleep(5)
-            #self.utility.clearTerminal()
+            time.sleep(3)
+            self.utility.clearTerminal()
 
 
 
     # Método on_message: Trata a mensagem recebida pelo(s) servidor(es)
     def on_message(self, client, userdata, msg):
 
-        rMessage = msg.payload.decode() # Pega o dado recebido e o exibe
-        print(" Mensagem recebida:", repr(rMessage))
-        time.sleep(5)
+        rMessage = msg.payload.decode()
 
-        self.message = json.loads(rMessage)
-        print(self.message)
+        if self.typeSubscribe == 1:
 
-        '''for r in self.message.values(): # Tratamento para separação de reservas correspondentes ao veículo não foi finalizada
+             # Pega o dado recebido e o exibe
+            print(" Mensagem recebida:", repr(rMessage))
+            time.sleep(5)
 
-            try:
-                self.cost += int(r["price"])
+            self.message = json.loads(rMessage)
+            print(self.message)
 
-            except Exception as e:
-                self.cost += 0
-                
-            self.reservations.append(r)'''
         
-        #self.messageArrived.set()
+        else:
+
+            global contractAddress # Variavel global utilizada para obter o endereço de contrato
+            contractAddress = rMessage
+            
     
     def on_publish(self, client, userdata, mid):
         print("\n\t Requisição publicada com sucesso! ")
