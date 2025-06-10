@@ -1,0 +1,22 @@
+[
+    {
+        "chargingStationID": 1,
+        "city_codename": "barro",
+        "city_name": "Barro - CE"
+    },
+    {
+        "chargingStationID": 2,
+        "city_codename": "jaguaribe",
+        "city_name": "Jaguaribe - CE"
+    },
+    {
+        "chargingStationID": 3,
+        "city_codename": "russas",
+        "city_name": "Russas - CE"
+    },
+    {
+        "chargingStationID": 4,
+        "city_codename": "fortaleza",
+        "city_name": "Fortaleza - CE"
+    }
+]
