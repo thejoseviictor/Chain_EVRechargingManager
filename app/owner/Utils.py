@@ -1,7 +1,7 @@
 # Funções Úteis para as Conexões HTTP ---------------------------------------------------------------------------------------------------------
 
 # Importando as Dependências:
-from flask import jsonify
+from flask import Flask, request, jsonify
 from requests.exceptions import RequestException, ConnectionError, Timeout, HTTPError # Exceções Para Problemas de Conexão.
 import urllib3 # Exceções Para Problemas de Conexão.
 
@@ -21,3 +21,7 @@ def handleHTTPExceptions(exception):
         return jsonify({"error": "Erro Genérico!"}), 500 # Erro 500: Internal Server Error.
     else:
         return jsonify({"error": "Erro Desconhecido!"}), 500
+
+# Enviando o Endereço dos Contratos Para os Servidores das Empresas:
+def sendContractsAddresses():
+    pass
