@@ -12,6 +12,20 @@ services:
     command: ["ganache-cli", "--host", "${GANACHE_HOST}", "--port", "${GANACHE_PORT}", "-d"] # "-d" Gera as Mesmas Contas e Chaves Privadas, Na Mesma Ordem (De Forma Determinística).
     network_mode: host
     restart: always
+  
+  # Serviço do Administrador/Owner da Blockchain Ganache:
+  owner:
+    build:
+      context: ./owner
+      dockerfile: Dockerfile
+    container_name: owner
+    depends_on:
+      - ganache
+    env_file:
+      - ./owner/.env
+    volumes:
+      - ./compiled_contracts:/app/contracts # Permite Acessar os ABIs e Bytecodes Compilados.
+    network_mode: host
 
   # Serviço da API do Servidor "EcoCharge":
   ecocharge:
@@ -24,6 +38,6 @@ services:
     env_file:
       - ./ev_recharging_servers/ecocharge/.env
     volumes:
-      - ./compiled_contracts:/app/contracts # Permite Acessar o ABI e Bytecode Compilados.
+      - ./compiled_contracts:/app/contracts
     network_mode: host
     restart: always
