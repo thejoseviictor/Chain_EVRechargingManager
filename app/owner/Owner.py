@@ -1,9 +1,17 @@
-# Inicializando a Blockchain Ganache e Seus Contratos -------------------------
+# Funções Administrativas do "Owner" da Blockchain Ganache ----------------------------------------------------
 
 # Importando as Dependências:
 import os
+from flask import Flask, request, jsonify
 from web3 import Web3
 import time
+
+# Criando a Aplicação Flask:
+app = Flask(__name__)
+
+# Salvando o IP e Porta Do Owner:
+OWNER_IP = os.environ.get('OWNER_IP')
+OWNER_PORT = int(os.environ.get('OWNER_PORT'))
 
 # Salvando as Informações do Ganache:
 GANACHE_URL = os.environ.get('GANACHE_URL')
@@ -57,3 +65,7 @@ if w3:
     print(f"Contrato Implantado em: {contract_address}\n")
 
     # ENVIAR O ENDEREÇO DO CONTRATO PARA OS SERVIDORES VIA API!
+
+# Iniciando a API (Flask) Para Enviar Informações dos Contratos Para os Servidores das Empresas:
+if __name__ == '__main__':
+    app.run(host=OWNER_IP, port=OWNER_PORT, debug=True)
