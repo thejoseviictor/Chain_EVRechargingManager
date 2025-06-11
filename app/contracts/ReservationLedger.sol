@@ -13,12 +13,10 @@ contract ReservationLedger {
         uint256 reservationID;
         uint256 chargingStationID;
         uint256 chargingPointID;
-        string cityName;
         string cityCodename;
         string companyName;
         uint256 chargingPointPower; // Potência do Carregador em kW.
         uint256 kWhPrice; // Em "wei", Menor Unidade de Valor do Ethereum.
-        uint256 vehicleID;
         uint256 startDateTime; // Converter ISO para "timestamp".
         uint256 finishDateTime;
         uint256 durationHours; // Duração em Horas.
@@ -49,18 +47,16 @@ contract ReservationLedger {
     // Eventos para Notificações:
     event ReservationCreated(
         uint256 indexed reservationID,
-        uint256 indexed chargingStationID,
-        uint256 indexed chargingPointID,
-        address indexed customer,
-        uint256 startDateTime,
+        address customer,
+        string cityCodename,
         uint256 price
     );
     event ReservationStatusUpdated(uint256 indexed reservationID, Status status);
     event TransactionRecorded(
         uint256 indexed transactionID,
-        uint256 indexed reservationID,
-        uint256 price,
-        address indexed payer
+        uint256 reservationID,
+        address payer,
+        uint256 price
     );
 
     // Modificadores:
@@ -91,12 +87,10 @@ contract ReservationLedger {
     function createReservation(
         uint256 _chargingStationID,
         uint256 _chargingPointID,
-        string memory _cityName,
         string memory _cityCodename,
         string memory _companyName,
         uint256 _chargingPointPower,
         uint256 _kWhPrice,
-        uint256 _vehicleID,
         uint256 _startDateTime,
         uint256 _finishDateTime,
         uint256 _durationHours,
@@ -111,12 +105,10 @@ contract ReservationLedger {
             reservationID: newReservationID,
             chargingStationID: _chargingStationID,
             chargingPointID: _chargingPointID,
-            cityName: _cityName,
             cityCodename: _cityCodename,
             companyName: _companyName,
             chargingPointPower: _chargingPointPower,
             kWhPrice: _kWhPrice,
-            vehicleID: _vehicleID,
             startDateTime: _startDateTime,
             finishDateTime: _finishDateTime,
             durationHours: _durationHours,
@@ -131,10 +123,8 @@ contract ReservationLedger {
         // Emitindo a Notificação:
         emit ReservationCreated(
             newReservationID,
-            _chargingStationID,
-            _chargingPointID,
             _customerAddress,
-            _startDateTime,
+            _cityCodename,
             price
         );
 
@@ -208,8 +198,8 @@ contract ReservationLedger {
         emit TransactionRecorded(
             newTransactionID,
             _reservationID,
-            reservations[_reservationID].price,
-            _payer
+            _payer,
+            reservations[_reservationID].price
         );
 
         // Emitindo a Notificação da Reserva:
