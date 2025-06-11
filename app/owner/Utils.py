@@ -23,5 +23,5 @@ def handleHTTPExceptions(exception):
         return jsonify({"error": "Erro Desconhecido!"}), 500
 
 # Enviando o Endereço dos Contratos Para os Servidores das Empresas:
-def sendContractsAddresses():
+def sendContractsAddresses(IP: str, PORT: int, contractsAddresses: dict):
     pass
