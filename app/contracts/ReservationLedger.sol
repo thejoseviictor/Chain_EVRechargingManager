@@ -38,6 +38,7 @@ contract ReservationLedger {
     mapping(uint256 => Reservation) public reservations;
     mapping(uint256 => TransactionRecord) public transactionRecords;
     mapping(address => bool) public authorizedRechargingServers;
+    mapping(address => uint256[]) private customerReservationIDs;  
 
     // Contadores de IDs:
     uint256 public nextReservationID;
@@ -113,6 +114,9 @@ contract ReservationLedger {
             customer: payable(_customerAddress),
             status: Status.PENDING
         });
+
+        // Associando o ID da Reserva ao Endereço da Carteira do Cliente:
+        customerReservationIDs[_customerAddress].push(newReservationID);
 
         // Incrementando o ID Para a Próxima Reserva:
         nextReservationID++;
@@ -216,5 +220,24 @@ contract ReservationLedger {
     function getTransactionRecord(uint256 _transactionID) public view returns (TransactionRecord memory) {
         require(transactionRecords[_transactionID].transactionID != 0, "ID de Transacao Nao Encontrado!");
         return transactionRecords[_transactionID];
+    }
+
+    // Função para Retornar Todas as Reservas de um Cliente:
+    function getReservationsByCustomer(address _customerAddress) public view returns (Reservation[] memory){
+        // Verificando o Endereço:
+        require(_customerAddress != address(0), "Endereco do Usuario Invalido!");
+        
+        // Obtendo Todas os IDs de Reserva Associadas a Este Cliente:
+        uint256[] storage customerIDs = customerReservationIDs[_customerAddress];
+        
+        // Criando um Array em Memória para Armazenar as Structs de Reserva Completas:
+        Reservation[] memory customerResList = new Reservation[](customerIDs.length);
+
+        // Iterando Sobre as IDs e Preenchendo o Array de Structs:
+        for (uint i = 0; i < customerIDs.length; i++) {
+            customerResList[i] = reservations[customerIDs[i]];
+        }
+
+        return customerResList;
     }
 }
