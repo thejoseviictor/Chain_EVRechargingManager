@@ -5,13 +5,23 @@ import os
 from flask import Flask, request, jsonify
 from web3 import Web3
 import time
+from Utils import sendContractsAddresses
+from ContractUtils import implementContract
 
 # Criando a Aplicação Flask:
 app = Flask(__name__)
 
-# Salvando o IP e Porta Do Owner:
+# Salvando o IP e Porta Da API Owner:
 OWNER_IP = os.environ.get('OWNER_IP')
 OWNER_PORT = int(os.environ.get('OWNER_PORT'))
+
+# Salvando o IP e Porta Das API dos Servidores das Empresas:
+ECOCHARGE_SERVER_IP = os.environ.get('ECOCHARGE_SERVER_IP')
+ECOCHARGE_SERVER_PORT = int(os.environ.get('ECOCHARGE_SERVER_PORT'))
+EFLUX_SERVER_IP = os.environ.get('EFLUX_SERVER_IP')
+EFLUX_SERVER_PORT = int(os.environ.get('EFLUX_SERVER_PORT'))
+VOLTPOINT_SERVER_IP = os.environ.get('VOLTPOINT_SERVER_IP')
+VOLTPOINT_SERVER_PORT = int(os.environ.get('VOLTPOINT_SERVER_PORT'))
 
 # Salvando as Informações do Ganache:
 GANACHE_URL = os.environ.get('GANACHE_URL')
@@ -39,32 +49,25 @@ if w3:
     eflux_account = accounts[EFLUX_ACCOUNT]
     voltpoint_account = accounts[VOLTPOINT_ACCOUNT]
 
-    # Implantando o Contrato:
-    ReservationLedger = w3.eth.contract(abi="app/contracts/", bytecode="app/contracts/")
+    # Implementando e Recebendo os Endereços dos Contratos:
+    escrow_address = implementContract(w3, owner_account, "app/contracts/", "app/contracts/")
+    recharging_ledger_address = implementContract(w3, owner_account, "app/contracts/", "app/contracts/")
+    reservation_ledger_address = implementContract(w3, owner_account, "app/contracts/", "app/contracts/")
+    print(f"Contrato 'Escrow' Implantado em: {escrow_address}\n")
+    print(f"Contrato 'RechargingLedger' Implantado em: {recharging_ledger_address}\n")
+    print(f"Contrato 'ReservationLedger' Implantado em: {reservation_ledger_address}\n")
 
-    # Construindo a Transação de Implantação:
-    transaction = ReservationLedger.constructor().build_transaction(
-        {
-            "from": owner_account,
-            "nonce": w3.eth.get_transaction_count(owner_account),
-            "gasPrice": w3.eth.gas_price,
-        }
-    )
+    # Salvando os Endereços dos Contratos em Um Dicionário:
+    contractsAddresses = {
+        "Escrow": escrow_address,
+        "RechargingLedger": recharging_ledger_address,
+        "ReservationLedger": reservation_ledger_address
+    }
 
-    # Assinando a Transação:
-    signed_transaction = w3.eth.account.sign_transaction(transaction, private_key=w3.eth.local_private_keys[0])
-
-    # Enviando a Transação:
-    tx_hash = w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
-
-    # Esperando Pela Mineração do Bloco e Obtendo o Recibo da Transação:
-    tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-
-    # Salvando o Endereço do Contrato:
-    contract_address = tx_receipt.contract_address
-    print(f"Contrato Implantado em: {contract_address}\n")
-
-    # ENVIAR O ENDEREÇO DO CONTRATO PARA OS SERVIDORES VIA API!
+    # Enviando os Endereços dos Contratos Para os Servidores das Empresas:
+    sendContractsAddresses(ECOCHARGE_SERVER_IP, ECOCHARGE_SERVER_PORT, contractsAddresses)
+    sendContractsAddresses(EFLUX_SERVER_IP, EFLUX_SERVER_PORT, contractsAddresses)
+    sendContractsAddresses(VOLTPOINT_SERVER_IP, VOLTPOINT_SERVER_PORT, contractsAddresses)
 
 # Iniciando a API (Flask) Para Enviar Informações dos Contratos Para os Servidores das Empresas:
 if __name__ == '__main__':
