@@ -11,7 +11,6 @@ contract ReservationLedger {
     // Dados da Reserva:
     struct Reservation {
         uint256 reservationID;
-        uint256 chargingStationID;
         uint256 chargingPointID;
         string cityCodename;
         string companyName;
@@ -85,7 +84,6 @@ contract ReservationLedger {
 
     // Criando uma Nova Reserva:
     function createReservation(
-        uint256 _chargingStationID,
         uint256 _chargingPointID,
         string memory _cityCodename,
         string memory _companyName,
@@ -103,7 +101,6 @@ contract ReservationLedger {
         uint256 newReservationID = nextReservationID;
         reservations[newReservationID] = Reservation({
             reservationID: newReservationID,
-            chargingStationID: _chargingStationID,
             chargingPointID: _chargingPointID,
             cityCodename: _cityCodename,
             companyName: _companyName,
