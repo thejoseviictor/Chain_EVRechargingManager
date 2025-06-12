@@ -33,7 +33,7 @@ contract Escrow {
         _;
     }
     modifier onlyServerOrOwner() {
-        require(reservationLedger.authorizedRechargingServers[msg.sender] || msg.sender == owner, "Apenas um Dos Servidores de Carregamento ou Administrador Pode Executar Esta Acao!");
+        require(reservationLedger.isAuthorizedRechargingServer(msg.sender) || msg.sender == owner, "Apenas um Dos Servidores de Carregamento ou Administrador Pode Executar Esta Acao!");
         _;
     }
 
@@ -52,7 +52,7 @@ contract Escrow {
         uint256 _amount
     ) public onlyServerOrOwner {
         // Verificando o Status da Reserva:
-        require(reservationLedger.reservations[_reservationID].status == ReservationLedger.Status.CONFIRMED, "Reserva Nao Confirmada no 'ReservationLedger'!");
+        require(reservationLedger.getReservation(_reservationID).status == ReservationLedger.Status.CONFIRMED, "Reserva Nao Confirmada no 'ReservationLedger'!");
 
         // Verificando as Informações dos Parâmetros do Escrow:
         // "address(0)" é Um Valor Padrão, Quando os Valores da Struct Ainda Não Foi Inicializados:
@@ -100,7 +100,7 @@ contract Escrow {
         require(!payment.released, "Fundos Ja Liberados!");
         
         // Verificando o Status da Reserva:
-        require(reservationLedger.reservations[_reservationID].status == ReservationLedger.Status.PAYED, "Reserva Nao Marcada Como Paga no 'ReservationLedger'!");
+        require(reservationLedger.getReservation(_reservationID).status == ReservationLedger.Status.PAYED, "Reserva Nao Marcada Como Paga no 'ReservationLedger'!");
 
         // Transferindo o Valor Para o Recebedor (Servidor):
         (bool success, ) = payment.recipient.call{value: payment.amount}("");
