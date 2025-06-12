@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+// Importando as Dependências dos Outros Contratos:
+import "./AuthorizedServers.sol";
 import "./ReservationLedger.sol";
 
 contract Escrow {
     // O Deployer do Contrato, Administrador:
     address public owner;
 
-    // Referência ao Contrato "ReservationLedger":
+    // Referência aos Contratos "AuthorizedServers" e "ReservationLedger":
+    AuthorizedServers public authorizedServers;
     ReservationLedger public reservationLedger;
 
     // Dados do Pagamento:
@@ -33,14 +36,14 @@ contract Escrow {
         _;
     }
     modifier onlyServerOrOwner() {
-        require(reservationLedger.isAuthorizedRechargingServer(msg.sender) || msg.sender == owner, "Apenas um Dos Servidores de Carregamento ou Administrador Pode Executar Esta Acao!");
+        require(authorizedServers.isAuthorizedRechargingServer(msg.sender) || msg.sender == owner, "Apenas um Dos Servidores de Carregamento ou Administrador Pode Executar Esta Acao!");
         _;
     }
 
     // Construtor:
-    constructor(address _reservationLedgerAddress) {
+    constructor(address _authorizedServersAddress, address _reservationLedgerAddress) {
         owner = msg.sender; // Define o Deployer do Contrato Como o Owner.
-        // Associando o Contrato "Escrow" ao "ReservationLedger":
+        authorizedServers = AuthorizedServers(_authorizedServersAddress);
         reservationLedger = ReservationLedger(_reservationLedgerAddress);
     }
 
