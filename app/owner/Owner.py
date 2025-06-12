@@ -50,18 +50,19 @@ if w3:
     voltpoint_account = accounts[VOLTPOINT_ACCOUNT]
 
     # Implementando e Recebendo os Endereços dos Contratos:
-    escrow_address = implementContract(w3, owner_account, "app/contracts/", "app/contracts/")
-    recharging_ledger_address = implementContract(w3, owner_account, "app/contracts/", "app/contracts/")
-    reservation_ledger_address = implementContract(w3, owner_account, "app/contracts/", "app/contracts/")
-    print(f"Contrato 'Escrow' Implantado em: {escrow_address}\n")
-    print(f"Contrato 'RechargingLedger' Implantado em: {recharging_ledger_address}\n")
+    reservation_ledger_address = implementContract(w3, owner_account, "app/contracts/", "app/contracts/") # Reserva.
+    escrow_address = implementContract(w3, owner_account, "app/contracts/", "app/contracts/") # Escrow de Pagamento.
+    charging_session_address = implementContract(w3, owner_account, "app/contracts/", "app/contracts/") # Sessão de Carregamento.
     print(f"Contrato 'ReservationLedger' Implantado em: {reservation_ledger_address}\n")
+    print(f"Contrato 'Escrow' Implantado em: {escrow_address}\n")
+    print(f"Contrato 'ChargingSession' Implantado em: {charging_session_address}\n")
+    
 
     # Salvando os Endereços dos Contratos em Um Dicionário:
     contractsAddresses = {
+        "ReservationLedger": reservation_ledger_address,
         "Escrow": escrow_address,
-        "RechargingLedger": recharging_ledger_address,
-        "ReservationLedger": reservation_ledger_address
+        "ChargingSession": charging_session_address
     }
 
     # Enviando os Endereços dos Contratos Para os Servidores das Empresas:
