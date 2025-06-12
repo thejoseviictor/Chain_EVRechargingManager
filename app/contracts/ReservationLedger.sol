@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+// Importando as Dependências dos Outros Contratos:
+import "./AuthorizedServers.sol";
+
 contract ReservationLedger {
     // O Deployer do Contrato, Administrador:
     address public owner;
+
+    // Referência ao Contrato "AuthorizedServers":
+    AuthorizedServers public authorizedServers;
 
     // Status da Reserva:
     enum Status {PENDING, CONFIRMED, PAYED, CANCELLED}
@@ -37,7 +43,6 @@ contract ReservationLedger {
     // Mapeamentos:
     mapping(uint256 => Reservation) public reservations;
     mapping(uint256 => TransactionRecord) public transactionRecords;
-    mapping(address => bool) public authorizedRechargingServers;
     mapping(address => uint256[]) private customerReservationIDs;  
 
     // Contadores de IDs:
@@ -67,25 +72,16 @@ contract ReservationLedger {
     }
     // Para Criar, Confirmar, Cancelar ou Concluir Reservas, ou Registrar Transações: Apenas um dos Servidores de Carregamento ou Administrador.
     modifier onlyServerOrOwner() {
-        require(authorizedRechargingServers[msg.sender] || msg.sender == owner, "Apenas um Dos Servidores de Carregamento ou Administrador Pode Executar Esta Acao!");
+        require(authorizedServers.isAuthorizedRechargingServer(msg.sender) || msg.sender == owner, "Apenas um Dos Servidores de Carregamento ou Administrador Pode Executar Esta Acao!");
         _;
     }
 
     // Construtor:
-    constructor() {
+    constructor(address _authorizedServersAddress) {
         owner = msg.sender; // Define o Deployer do Contrato Como o Owner.
+        authorizedServers = AuthorizedServers(_authorizedServersAddress);
         nextReservationID = 1;
         nextTransactionID = 1;
-    }
-
-    // Função para Autorizar um Servidor de Posto de Carregamento:
-    function authorizeRechargingServer(address _server) public onlyOwner {
-        authorizedRechargingServers[_server] = true;
-    }
-
-    // Verificando Se Um Servidor de Posto de Carregamento Está Autorizado:
-    function isAuthorizedRechargingServer(address _serverAddress) public view returns (bool) {
-        return authorizedRechargingServers[_serverAddress];
     }
 
     // Criando uma Nova Reserva:
