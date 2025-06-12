@@ -83,8 +83,8 @@ contract ReservationLedger {
         authorizedRechargingServers[_server] = true;
     }
 
-    // Função Getter Para Verificar Se Um Servidor de Posto de Carregamento Está Autorizado:
-    function **isAuthorizedRechargingServer**(address _serverAddress) public view returns (bool) {
+    // Verificando Se Um Servidor de Posto de Carregamento Está Autorizado:
+    function isAuthorizedRechargingServer(address _serverAddress) public view returns (bool) {
         return authorizedRechargingServers[_serverAddress];
     }
 
