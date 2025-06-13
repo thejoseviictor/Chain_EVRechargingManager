@@ -63,6 +63,7 @@ contract Escrow {
         require(_payer != address(0), "Endereco do Pagador Invalido!");
         require(_recipient != address(0), "Endereco do Recebedor Invalido!");
         require(_amount > 0, "O Valor Deve Ser Maior Que Zero!");
+        require(_amount == reservationLedger.getReservation(_reservationID).price, "Valor Indicado Nao Corresponde ao Valor da Reserva!");
 
         // Criando o Escrow:
         escrowPayments[_reservationID] = EscrowPayment({
