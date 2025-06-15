@@ -85,7 +85,7 @@ contract ChargingSessionManager {
         require(session.status == SessionStatus.IN_PROGRESS, "A Sessao Nao Esta Em Andamento!");
 
         // Atualizando o Status da Sessão de Recarga:
-        session.status = SessionStatus.COMPLETED;
+        session.status = SessionStatus.FINISHED;
 
         // Registrando a Transação da Reserva no "ReservationLedger":
         reservationLedger.recordTransaction(
@@ -98,7 +98,7 @@ contract ChargingSessionManager {
         escrow.releaseFunds(_reservationID);
 
         // Emitindo uma Notificação:
-        emit SessionStatusUpdated(session.reservationID, SessionStatus.COMPLETED);
+        emit SessionStatusUpdated(session.reservationID, SessionStatus.FINISHED);
     }
 
     // Auditando os Detalhes de Uma Sessão de Recarga:
