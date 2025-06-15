@@ -24,7 +24,7 @@ services:
     env_file:
       - ./owner/.env
     volumes:
-      - ./build:/app/contracts # Permite Acessar os ABIs e Bytecodes Compilados.
+      - ./build:/app/build # Permite Acessar os ABIs e Bytecodes Compilados.
     network_mode: host
 
   # Serviço da API do Servidor "EcoCharge":
@@ -38,6 +38,6 @@ services:
     env_file:
       - ./ev_recharging_servers/ecocharge/.env
     volumes:
-      - ./build:/app/contracts
+      - ./build:/app/build
     network_mode: host
     restart: always
