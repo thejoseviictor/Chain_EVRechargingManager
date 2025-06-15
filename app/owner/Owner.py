@@ -54,7 +54,7 @@ escrow_contract = deployContract(w3, owner_account, "Escrow", as_contract.addres
 cs_contract = deployContract(w3, owner_account, "ChargingSession", as_contract.address, rl_contract.address, escrow_contract.address) # Sessão de Carregamento.
 
 # Salvando os Endereços dos Contratos em Um Dicionário Para Enviar aos Servidores das Empresas:
-contractsAddresses = {
+contracts_addresses = {
     "ReservationLedger": rl_contract.address,
     "Escrow": escrow_contract.address,
     "ChargingSession": cs_contract.address
@@ -65,11 +65,10 @@ authorizeServer(w3, as_contract, owner_account, ECOCHARGE_ACCOUNT)
 authorizeServer(w3, as_contract, owner_account, EFLUX_ACCOUNT)
 authorizeServer(w3, as_contract, owner_account, VOLTPOINT_ACCOUNT)
 
-# FINALIZAR!
-# Enviando os Endereços dos Contratos Para os Servidores das Empresas:
-sendContractsAddresses(ECOCHARGE_SERVER_IP, ECOCHARGE_SERVER_PORT, contractsAddresses)
-sendContractsAddresses(EFLUX_SERVER_IP, EFLUX_SERVER_PORT, contractsAddresses)
-sendContractsAddresses(VOLTPOINT_SERVER_IP, VOLTPOINT_SERVER_PORT, contractsAddresses)
+# Rota Para Enviar os Endereços dos Contratos Deployados:
+@app.route('/contracts', methods=['GET'])
+def getContractsAddresses():
+    return jsonify(contracts_addresses), 200
 
 # Iniciando a API (Flask) Para Enviar Informações dos Contratos Para os Servidores das Empresas:
 if __name__ == '__main__':
