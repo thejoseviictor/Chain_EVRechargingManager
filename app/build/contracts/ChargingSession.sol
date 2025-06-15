@@ -16,7 +16,7 @@ contract ChargingSessionManager {
     Escrow public escrow;
 
     // Status da Sessão de Recarga:
-    enum SessionStatus {IDLE, IN_PROGRESS, COMPLETED}
+    enum SessionStatus {IDLE, IN_PROGRESS, FINISHED}
 
     // Dados da Sessão de Recarga:
     struct ChargingSession {
@@ -76,7 +76,7 @@ contract ChargingSessionManager {
     }
 
     // Finalizando uma Sessão de Recarga e Liberando o Fundos de Pagamento:
-    function completeChargingSession(
+    function finishChargingSession(
         uint256 _reservationID
     ) public onlyOwner {
         // Verificando as Informações da Recarga:
