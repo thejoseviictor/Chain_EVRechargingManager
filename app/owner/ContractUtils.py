@@ -50,21 +50,41 @@ def deployContract(w3: Web3, deployer_account, contract_name: str, *args):
         return w3.eth.contract(address=contract_address, abi=abi)
     return None
 
+# Autorizando o Servidor de Uma Empresa na Blockchain:
 def authorizeServer(w3: Web3, contract, deployer_account, server_account):
-    # Verificando o Endereço da Conta do Deployer e Servidor:
     if w3.is_checksum_address(deployer_account) and w3.is_checksum_address(server_account):
         try:
             print(f"Autorizando o Servidor: {server_account}\n")
-            
             tx_hash = contract.functions.authorizeRechargingServer(server_account).transact({
                 'from': deployer_account,
                 "nonce": w3.eth.get_transaction_count(deployer_account),
                 'gasPrice': w3.eth.gas_price
             })
-
             w3.eth.wait_for_transaction_receipt(tx_hash)
-
             is_auth = contract.functions.isAuthorizedRechargingServer(server_account).call()
             print(f"Estado da Autorização do Servidor '{server_account}': {is_auth}\n")
         except Exception as e:
             print(f"Erro ao Autorizar o Servidor '{server_account}': '{e}'\n")
+
+# Finalizando Uma Sessão de Carregamento e Liberando os Fundos de Pagamento:
+def finishChargingSession(w3: Web3, contract, deployer_account, reservationID: int):
+    if w3.is_checksum_address(deployer_account):
+        try:
+            print(f"Finalizando a Sessão de Carregamento da Reserva: {reservationID}\n")
+            tx_hash = contract.functions.finishChargingSession(reservationID).transact({
+                'from': deployer_account,
+                "nonce": w3.eth.get_transaction_count(deployer_account),
+                'gasPrice': w3.eth.gas_price
+            })
+            w3.eth.wait_for_transaction_receipt(tx_hash)
+            cs = contract.functions.getChargingSession(reservationID).call()
+            cs_status = cs[2] # 0 = IDLE, 1 = IN_PROGRESS, 2 = FINISHED.
+            if cs_status == 2:
+                print(f"Sessão de Carregamento da Reserva '{reservationID}' Finalizada Com Sucesso!\n")
+                return True
+            else:
+                print(f"Falha ao Finalizar a Sessão de Carregamento da Reserva '{reservationID}'!\n")
+                return None
+        except Exception as e:
+            print(f"Erro ao Finalizar a Sessão de Carregamento da Reserva '{reservationID}': {e}\n")
+            return None
