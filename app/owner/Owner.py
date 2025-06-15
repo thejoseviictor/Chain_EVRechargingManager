@@ -1,12 +1,11 @@
-# Funções Administrativas do "Owner" da Blockchain Ganache ----------------------------------------------------
+# Funções Administrativas do "Owner" da Blockchain Ganache ----------------------------------------------------------------------------------------------------
 
 # Importando as Dependências:
 import os
 from flask import Flask, request, jsonify
 from web3 import Web3
 import time
-from Utils import sendContractsAddresses
-from ContractUtils import deployContract, authorizeServer
+from ContractUtils import deployContract, authorizeServer, finishChargingSession
 
 # Criando a Aplicação Flask:
 app = Flask(__name__)
@@ -69,6 +68,22 @@ authorizeServer(w3, as_contract, owner_account, VOLTPOINT_ACCOUNT)
 @app.route('/contracts', methods=['GET'])
 def getContractsAddresses():
     return jsonify(contracts_addresses), 200
+
+# Rota Para Finalizar uma Sessão de Carregamento e Liberar os Fundos do Pagamento ao Servidor Que Prestou o Serviço:
+@app.route('/finish_cs', methods=['POST'])
+def finishCS():
+    # Tratando os Dados Recebidos:
+    data = request.json # Recebendo os Dados em um Dicionário: data = {reservationID: int}.
+    reservationID = data.get('reservationID') # ID da Reserva.
+
+    # Solicitando a Finalização da Sessão de Carregamento na Blockchain:
+    finished = finishChargingSession(w3, cs_contract, owner_account, reservationID)
+
+    # Retornando:
+    if finished:
+        return f"Sucesso ao Finalizar a Sessão de Carregamento da Reserva '{reservationID}'", 200
+    else:
+        return jsonify({"error": "Erro Genérico!"}), 500
 
 # Iniciando a API (Flask) Para Enviar Informações dos Contratos Para os Servidores das Empresas:
 if __name__ == '__main__':
