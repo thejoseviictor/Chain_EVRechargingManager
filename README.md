@@ -20,7 +20,8 @@ Cada entidade deve rodar em seu próprio container Docker e suas imagens podem s
 <br><br>Para o funcionamento adequado do sistema, o “deploy” dos contratos deve ser executado pelo cliente “owner”.
 
 ## Tópicos MQTT “Subscriber” dos Servidores:
-"vehicle/create_reservations/server", para agendar as reservas.
+"vehicle/contracts_addresses/server”, para indicar os endereços dos contratos no Ganache.
+<br><br>"vehicle/create_reservations/server", para agendar as reservas.
 <br><br>"vehicle/start_charging_session/server", para iniciar uma sessão de carregamento.
 <br><br>"vehicle/end_charging_session/server", para finalizar uma sessão de carregamento.
 
