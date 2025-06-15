@@ -37,7 +37,7 @@ voltpoint_account = None
 contracts_addresses = {}
 
 # Configurando a Blockchain Antes de Todas as Rotas:
-@app.before_first_request
+@app.before_request
 def setupBlockchain():
     # Definindo as Variáveis Globais:
     global w3, owner_account, ecocharge_account, eflux_account, voltpoint_account, contracts_addresses
