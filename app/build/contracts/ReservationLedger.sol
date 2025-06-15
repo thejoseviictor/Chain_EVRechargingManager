@@ -64,12 +64,7 @@ contract ReservationLedger {
         uint256 price
     );
 
-    // Modificadores:
-    // Apenas o Administrador Pode Adicionar Servidores de Postos Autorizados:
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Apenas o Administrador Pode Executar Esta Acao!");
-        _;
-    }
+    // Modificador:
     // Para Criar, Confirmar, Cancelar ou Concluir Reservas, ou Registrar Transações: Apenas um dos Servidores de Carregamento ou Administrador.
     modifier onlyServerOrOwner() {
         require(authorizedServers.isAuthorizedRechargingServer(msg.sender) || msg.sender == owner, "Apenas um Dos Servidores de Carregamento ou Administrador Pode Executar Esta Acao!");
