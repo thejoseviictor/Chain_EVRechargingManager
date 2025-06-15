@@ -36,8 +36,7 @@ eflux_account = None
 voltpoint_account = None
 contracts_addresses = {}
 
-# Configurando a Blockchain Antes de Todas as Rotas:
-@app.before_request
+# Configurando a Blockchain:
 def setupBlockchain():
     # Definindo as Variáveis Globais:
     global w3, owner_account, ecocharge_account, eflux_account, voltpoint_account, contracts_addresses
@@ -102,6 +101,7 @@ def finishCS():
     else:
         return jsonify({"error": "Erro Genérico!"}), 500
 
-# Iniciando a API (Flask) Para Enviar Informações dos Contratos Para os Servidores das Empresas:
+# Iniciando a Blockchain e API (Flask):
 if __name__ == '__main__':
-    app.run(host=OWNER_IP, port=OWNER_PORT, debug=True)
+    setupBlockchain()
+    app.run(host=OWNER_IP, port=OWNER_PORT, debug=True, use_reloader=False)
