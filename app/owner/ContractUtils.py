@@ -28,14 +28,13 @@ def deployContract(w3: Web3, deployer_account, contract_name: str, *args):
     Contract = w3.eth.contract(abi=abi, bytecode=bytecode)
 
     # Construindo a Transação de Deploy:
-    transaction = Contract.constructor(*args).build_transaction(
-        {
+    transaction = Contract.constructor(*args).build_transaction({
             "from": deployer_account,
             "nonce": w3.eth.get_transaction_count(deployer_account),
             "gasPrice": w3.eth.gas_price,
             "gas": 3000000,
-        }
-    )
+            "chainId": w3.eth.chain_id,
+    })
     
     # Assinando a Transação:
     signed_tx = w3.eth.account.sign_transaction(transaction, private_key=DEPLOYER_PRIVATE_KEY)
@@ -48,7 +47,7 @@ def deployContract(w3: Web3, deployer_account, contract_name: str, *args):
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
     # Salvando o Endereço do Contrato:
-    contract_address = tx_receipt.contract_address
+    contract_address = tx_receipt.contractAddress
     print(f"Contrato '{contract_name}' Deployado em: {contract_address}\n")
 
     # Retonando o Contrato e Endereço:
@@ -61,7 +60,9 @@ def authorizeServer(w3: Web3, contract, deployer_account, server_account):
         tx_hash = contract.functions.authorizeRechargingServer(server_account).transact({
             'from': deployer_account,
             "nonce": w3.eth.get_transaction_count(deployer_account),
-            'gasPrice': w3.eth.gas_price
+            'gasPrice': w3.eth.gas_price,
+            "gas": 3000000,
+            "chainId": w3.eth.chain_id
         })
         w3.eth.wait_for_transaction_receipt(tx_hash)
         is_auth = contract.functions.isAuthorizedRechargingServer(server_account).call()
@@ -76,7 +77,9 @@ def finishChargingSession(w3: Web3, contract, deployer_account, reservationID: i
         tx_hash = contract.functions.finishChargingSession(reservationID).transact({
             'from': deployer_account,
             "nonce": w3.eth.get_transaction_count(deployer_account),
-            'gasPrice': w3.eth.gas_price
+            'gasPrice': w3.eth.gas_price,
+            "gas": 3000000,
+            "chainId": w3.eth.chain_id
         })
         w3.eth.wait_for_transaction_receipt(tx_hash)
         cs = contract.functions.getChargingSession(reservationID).call()
