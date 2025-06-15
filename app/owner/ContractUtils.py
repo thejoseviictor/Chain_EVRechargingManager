@@ -1,11 +1,15 @@
 # Funções Úteis para Contratos Solidity ---------------------------------------------------------------------------
 
 # Importando as Dependências:
+import os
 from web3 import Web3
 import json
 
 # Caminho dos Contratos:
 CONTRACTS_DIR = 'build/contracts/'
+
+# Chave Privada do Deployer:
+DEPLOYER_PRIVATE_KEY = os.environ.get('DEPLOYER_PRIVATE_KEY')
 
 # Carregando o "ABI" e o "bytecode" de Um Contrato Compilado:
 def getContractData(contract_name: str):
@@ -16,7 +20,6 @@ def getContractData(contract_name: str):
     return abi, bytecode
 
 # Implementando um Contrato e Retornando o Seu Endereço:
-# Todas as Contas São Locais e Desbloqueadas no Ganache, Não Sendo Necessário Assinar as Transações.
 def deployContract(w3: Web3, deployer_account, contract_name: str, *args):
     # Verificando o Endereço da Conta do Deployer:
     if w3.is_checksum_address(deployer_account):
@@ -34,9 +37,12 @@ def deployContract(w3: Web3, deployer_account, contract_name: str, *args):
                 "gasPrice": w3.eth.gas_price,
             }
         )
+        
+        # Assinando a Transação:
+        signed_transaction = w3.eth.account.sign_transaction(transaction, private_key=DEPLOYER_PRIVATE_KEY)
 
         # Enviando a Transação:
-        tx_hash = w3.eth.send_transaction(transaction)
+        tx_hash = w3.eth.send_raw_transaction(signed_transaction.raw_transaction)
         print(f"Hash da Transação de Deploy de '{contract_name}': {tx_hash.hex()}\n")
 
         # Esperando Pela Mineração do Bloco e Obtendo o Recibo da Transação:
