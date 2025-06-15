@@ -1,4 +1,4 @@
-# Servidor da Empresa "EcoCharge", que Atua no Estado do Ceará -------------------------------------------------------------------------------------------------------
+# Servidor da Empresa "EcoCharge", que Atua no Estado do Ceará ---------------------------------------------------------
 
 # Importando as Dependências:
 import os # Para Usar Variáveis de Ambiente.
@@ -10,6 +10,9 @@ from ChargingStationsFile import ChargingStationsFile # Que Manipula a Persistê
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
 import mqttFunctions # Função para Configurar e Inicializar o MQTT.
 from Utils import sendReservationsToOtherServers, connectGanacheWeb3, getContractsAddresses
+
+# Criando a Aplicação Flask:
+app = Flask(__name__) # "__name__" se tornará "__main__" ao executar.
 
 # Salvando o Nome da Empresa:
 companyName = os.environ.get('COMPANY_NAME') # Variável de Ambiente do Docker Compose.
@@ -24,16 +27,13 @@ reservationsData = ReservationsFile()
 # Criando o Objeto dos Postos de Recarga no Banco de Dados:
 chargingStationsData = ChargingStationsFile()
 
-# Criando a Aplicação Flask:
-app = Flask(__name__) # "__name__" se tornará "__main__" ao executar.
-
 # Salvando as Informações do Ganache:
 GANACHE_URL = os.environ.get('GANACHE_URL')
 ECOCHARGE_ACCOUNT = int(os.environ.get('ECOCHARGE_ACCOUNT'))
 EFLUX_ACCOUNT = int(os.environ.get('EFLUX_ACCOUNT'))
 VOLTPOINT_ACCOUNT = int(os.environ.get('VOLTPOINT_ACCOUNT'))
 
-# Conectando ao Ganache e Web3:
+# Conectando ao Ganache (Web3):
 w3 = connectGanacheWeb3(GANACHE_URL)
 
 # Configurando as Contas do Ganache:
@@ -57,4 +57,4 @@ if __name__ == '__main__':
     mqtt_thread.start() # Iniciando a Thread do MQTT.
 
     # Iniciando o Servidor HTTP (Flask):
-    app.run(host=SERVER_IP, port=SERVER_PORT, debug=True, threaded=True) # Threaded = O Flask Pode Tratar Múltiplas Requisições Ao Mesmo Tempo.
+    app.run(host=SERVER_IP, port=SERVER_PORT, debug=True, use_reloader=False)
