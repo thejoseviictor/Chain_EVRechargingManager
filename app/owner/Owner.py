@@ -28,41 +28,58 @@ EFLUX_SERVER_PORT = int(os.environ.get('EFLUX_SERVER_PORT'))
 VOLTPOINT_SERVER_IP = os.environ.get('VOLTPOINT_SERVER_IP')
 VOLTPOINT_SERVER_PORT = int(os.environ.get('VOLTPOINT_SERVER_PORT'))
 
-# Conectando ao Ganache e Web3:
-while True:
-    try:
-        w3 = Web3(Web3.HTTPProvider(GANACHE_URL))
-        if not w3.is_connected():
-            raise Exception("Não foi Possível Conectar-se Ao Ganache!\n")
-        print("Conectado ao Ganache!\n")
-        break
-    except Exception as e:
-        print(f"Erro de Conexão ao Ganache: {e}\n")
-        time.sleep(3) # Tempo de Espera Para Tentar uma Nova Conexão.
+# Dados Globais da Blockchain:
+w3 = None
+owner_account = None
+ecocharge_account = None
+eflux_account = None
+voltpoint_account = None
+contracts_addresses = {}
 
-# Configurando as Contas do Ganache:
-owner_account = w3.eth.accounts[0]
-ecocharge_account = w3.eth.accounts[ECOCHARGE_ACCOUNT]
-eflux_account = w3.eth.accounts[EFLUX_ACCOUNT]
-voltpoint_account = w3.eth.accounts[VOLTPOINT_ACCOUNT]
+# Configurando a Blockchain Antes de Todas as Rotas:
+@app.before_first_request
+def setupBlockchain():
+    # Definindo as Variáveis Globais:
+    global w3, owner_account, ecocharge_account, eflux_account, voltpoint_account, contracts_addresses
 
-# Implementando e Recebendo os Endereços dos Contratos:
-as_contract = deployContract(w3, owner_account, "AuthorizedServers") # Servidores Autorizados.
-rl_contract = deployContract(w3, owner_account, "ReservationLedger", as_contract.address) # Reservas.
-escrow_contract = deployContract(w3, owner_account, "Escrow", as_contract.address, rl_contract.address) # Escrow de Pagamento.
-csm_contract = deployContract(w3, owner_account, "ChargingSessionManager", as_contract.address, rl_contract.address, escrow_contract.address) # Sessão de Carregamento.
+    # Conectando ao Ganache e Web3:
+    while True:
+        try:
+            w3 = Web3(Web3.HTTPProvider(GANACHE_URL))
+            if not w3.is_connected():
+                raise Exception("Não foi Possível Conectar-se Ao Ganache!\n")
+            print("Conectado ao Ganache!\n")
+            break
+        except Exception as e:
+            print(f"Erro de Conexão ao Ganache: {e}\n")
+            time.sleep(3) # Tempo de Espera Para Tentar uma Nova Conexão.
 
-# Salvando os Endereços dos Contratos em Um Dicionário Para Enviar aos Servidores das Empresas:
-contracts_addresses = {
-    "ReservationLedger": rl_contract.address,
-    "Escrow": escrow_contract.address,
-    "ChargingSessionManager": csm_contract.address
-}
+    # Configurando as Contas do Ganache:
+    owner_account = w3.eth.accounts[0]
+    ecocharge_account = w3.eth.accounts[ECOCHARGE_ACCOUNT]
+    eflux_account = w3.eth.accounts[EFLUX_ACCOUNT]
+    voltpoint_account = w3.eth.accounts[VOLTPOINT_ACCOUNT]
 
-# Autorizando os Servidores das Empresas no Contrato "AuthorizedServers":
-authorizeServer(w3, as_contract, owner_account, ECOCHARGE_ACCOUNT)
-authorizeServer(w3, as_contract, owner_account, EFLUX_ACCOUNT)
-authorizeServer(w3, as_contract, owner_account, VOLTPOINT_ACCOUNT)
+    # Implementando e Recebendo os Endereços dos Contratos:
+    as_contract = deployContract(w3, owner_account, "AuthorizedServers") # Servidores Autorizados.
+    rl_contract = deployContract(w3, owner_account, "ReservationLedger", as_contract.address) # Reservas.
+    escrow_contract = deployContract(w3, owner_account, "Escrow", as_contract.address, rl_contract.address) # Escrow de Pagamento.
+    csm_contract = deployContract(w3, owner_account, "ChargingSessionManager", as_contract.address, rl_contract.address, escrow_contract.address) # Sessão de Carregamento.
+
+    # Salvando os Endereços dos Contratos em Um Dicionário Para Enviar aos Servidores das Empresas:
+    contracts_addresses = {
+        "ReservationLedger": rl_contract.address,
+        "Escrow": escrow_contract.address,
+        "ChargingSessionManager": csm_contract.address
+    }
+
+    # Autorizando os Servidores das Empresas no Contrato "AuthorizedServers":
+    authorizeServer(w3, as_contract, owner_account, ecocharge_account)
+    authorizeServer(w3, as_contract, owner_account, eflux_account)
+    authorizeServer(w3, as_contract, owner_account, voltpoint_account)
+
+    # Armazenando o Contrato da Sessão de Carregamento Para Uso na Rota "/finish_cs":
+    app.config["CSM_CONTRACT"] = csm_contract
 
 # Rota Para Enviar os Endereços dos Contratos Deployados:
 @app.route('/contracts', methods=['GET'])
@@ -77,7 +94,7 @@ def finishCS():
     reservationID = data.get('reservationID') # ID da Reserva.
 
     # Solicitando a Finalização da Sessão de Carregamento na Blockchain:
-    finished = finishChargingSession(w3, cs_contract, owner_account, reservationID)
+    finished = finishChargingSession(w3, app.config["CSM_CONTRACT"], owner_account, reservationID)
 
     # Retornando:
     if finished:
