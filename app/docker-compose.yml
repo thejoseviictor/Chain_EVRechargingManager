@@ -9,9 +9,14 @@ services:
       - ./ganache/.env
     ports:
       - "8545:8545"
-    command: ["ganache-cli", "--host", "${GANACHE_HOST}", "--port", "${GANACHE_PORT}", "-d"] # "-d" Gera as Mesmas Contas e Chaves Privadas, Na Mesma Ordem (De Forma Determinística).
+    command: ["ganache-cli", "--host", "0.0.0.0", "--port", "8545", "-d"] # "-d" Gera as Mesmas Contas e Chaves Privadas, Na Mesma Ordem (De Forma Determinística).
     network_mode: host
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8545"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   
   # Serviço do Administrador/Owner da Blockchain Ganache:
   owner:
