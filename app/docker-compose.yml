@@ -35,6 +35,7 @@ services:
     container_name: ecocharge_server
     depends_on:
       - ganache
+      - owner
     env_file:
       - ./ev_recharging_servers/ecocharge/.env
     volumes:
