@@ -50,13 +50,13 @@ voltpoint_account = w3.eth.accounts[VOLTPOINT_ACCOUNT]
 as_contract = deployContract(w3, owner_account, "AuthorizedServers") # Servidores Autorizados.
 rl_contract = deployContract(w3, owner_account, "ReservationLedger", as_contract.address) # Reservas.
 escrow_contract = deployContract(w3, owner_account, "Escrow", as_contract.address, rl_contract.address) # Escrow de Pagamento.
-cs_contract = deployContract(w3, owner_account, "ChargingSession", as_contract.address, rl_contract.address, escrow_contract.address) # Sessão de Carregamento.
+csm_contract = deployContract(w3, owner_account, "ChargingSessionManager", as_contract.address, rl_contract.address, escrow_contract.address) # Sessão de Carregamento.
 
 # Salvando os Endereços dos Contratos em Um Dicionário Para Enviar aos Servidores das Empresas:
 contracts_addresses = {
     "ReservationLedger": rl_contract.address,
     "Escrow": escrow_contract.address,
-    "ChargingSession": cs_contract.address
+    "ChargingSessionManager": csm_contract.address
 }
 
 # Autorizando os Servidores das Empresas no Contrato "AuthorizedServers":
