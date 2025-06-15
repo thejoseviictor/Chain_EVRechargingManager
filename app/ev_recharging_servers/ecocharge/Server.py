@@ -9,7 +9,7 @@ from ReservationsFile import ReservationsFile # Que Manipula a Persistência de 
 from ChargingStationsFile import ChargingStationsFile # Que Manipula a Persistência de Dados dos Postos de Recarga.
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
 import mqttFunctions # Função para Configurar e Inicializar o MQTT.
-from Utils import sendReservationsToOtherServers, connectGanacheWeb3 # Função Para Enviar Solicitações de Reservas Para Outros Servidores.
+from Utils import sendReservationsToOtherServers, connectGanacheWeb3, getContractsAddresses
 
 # Salvando o Nome da Empresa:
 companyName = os.environ.get('COMPANY_NAME') # Variável de Ambiente do Docker Compose.
@@ -37,10 +37,12 @@ VOLTPOINT_ACCOUNT = int(os.environ.get('VOLTPOINT_ACCOUNT'))
 w3 = connectGanacheWeb3(GANACHE_URL)
 
 # Configurando as Contas do Ganache:
-accounts = w3.eth.accounts
-ecocharge_account = accounts[ECOCHARGE_ACCOUNT]
-eflux_account = accounts[EFLUX_ACCOUNT]
-voltpoint_account = accounts[VOLTPOINT_ACCOUNT]
+ecocharge_account = w3.eth.accounts[ECOCHARGE_ACCOUNT]
+eflux_account = w3.eth.accounts[EFLUX_ACCOUNT]
+voltpoint_account = w3.eth.accounts[VOLTPOINT_ACCOUNT]
+
+# Recebendo os Endereços dos Contratos pelo "Owner":
+contracts_addresses = getContractsAddresses()
 
 # Rota Para Agendar as Reservas de um Veículo Específico, de Acordo com a Lista da Rota de Reservas (Servidor-Servidor):
 @app.route('/reservation', methods=['POST'])
