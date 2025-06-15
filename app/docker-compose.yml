@@ -3,13 +3,19 @@ version: '3.8'
 services:
   # Serviço do Ganache:
   ganache:
-    image: trufflesuite/ganache-cli:latest
+    image: trufflesuite/ganache:v7.9.2
     container_name: ganache
     env_file:
       - ./ganache/.env
     ports:
       - "8545:8545"
-    command: ["ganache-cli", "--host", "0.0.0.0", "--port", "8545", "-d"] # "-d" Gera as Mesmas Contas e Chaves Privadas, Na Mesma Ordem (De Forma Determinística).
+    command: 
+      - --host=0.0.0.0
+      - --port=8545
+      - --deterministic # Gera as Mesmas Contas e Chaves Privadas, Na Mesma Ordem (De Forma Determinística).
+      - --chain.vmErrorsOnRPCResponse=true # Mostra os Erros Reais da Máquina Virtual Ethereum nas Respostas.
+      - --wallet.totalAccounts=10
+      - --wallet.defaultBalance=100
     network_mode: host
     restart: always
     healthcheck:
