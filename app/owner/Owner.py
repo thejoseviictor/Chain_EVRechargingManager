@@ -91,10 +91,8 @@ def finishCS():
     # Tratando os Dados Recebidos:
     data = request.json # Recebendo os Dados em um Dicionário: data = {reservationID: int}.
     reservationID = data.get('reservationID') # ID da Reserva.
-
     # Solicitando a Finalização da Sessão de Carregamento na Blockchain:
     finished = finishChargingSession(w3, app.config["CSM_CONTRACT"], owner_account, reservationID)
-
     # Retornando:
     if finished:
         return f"Sucesso ao Finalizar a Sessão de Carregamento da Reserva '{reservationID}'", 200
