@@ -109,13 +109,13 @@ class VehicleClient:
             key = rMessage.keys()[0]
 
             if key == "success" :
-                print('')
+                print(rMessage)
             
             elif key == "error" :
-                print('')
+                print('rMessage')
             
             else :
-                print('')
+                print('rMessage')
 
 
         elif self.type_subscribe == 4:
@@ -123,13 +123,13 @@ class VehicleClient:
             key = rMessage.keys()[0]
 
             if key == "success" :
-                print('')
+                print('rMessage')
             
             elif key == "error" :
-                print('')
+                print('rMessage')
             
             else :
-                print('')
+                print('rMessage')
             
             
     
