@@ -43,7 +43,7 @@ class Reservation:
     # Data de Finalização = Data de Ínicio + Duração de Carregamento em Horas
     def calculateFinishDateISO(self):
         start = datetime.datetime.fromisoformat(self.startDateISO) # Decodificando a Data de Ínicio do Formato ISO para DateTime.
-        finish = start + datetime.timedelta(hours=self.duration) # Calculando a Data de Finalização.
+        finish = start + datetime.timedelta(hours=self.durationHours) # Calculando a Data de Finalização.
         return finish.isoformat() # Codificando a Data de Finalização do DateTime para Formato ISO.
 
 # Manipulação de Dados das Reservas:
