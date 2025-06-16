@@ -1,4 +1,4 @@
-# Funções Administrativas do "Owner" da Blockchain Ganache ----------------------------------------------------------------------------------------------------
+# Funções Administrativas do "Owner" da Blockchain Ganache -------------------------------------------------------------------------------------------------------------------------------------
 
 # Importando as Dependências:
 import os
@@ -62,12 +62,14 @@ def setupBlockchain():
     # Implementando e Recebendo os Endereços dos Contratos:
     as_contract = deployContract(w3, owner_account, "AuthorizedServers") # Servidores Autorizados.
     rl_contract = deployContract(w3, owner_account, "ReservationLedger", as_contract.address) # Reservas.
+    tl_contract = deployContract(w3, owner_account, "TransactionLedger", as_contract.address, rl_contract.address) # Transações.
     escrow_contract = deployContract(w3, owner_account, "Escrow", as_contract.address, rl_contract.address) # Escrow de Pagamento.
-    csm_contract = deployContract(w3, owner_account, "ChargingSessionManager", as_contract.address, rl_contract.address, escrow_contract.address) # Sessão de Carregamento.
+    csm_contract = deployContract(w3, owner_account, "ChargingSessionManager", as_contract.address, rl_contract.address, tl_contract.address, escrow_contract.address) # Sessão de Carregamento.
 
     # Salvando os Endereços dos Contratos em Um Dicionário Para Enviar aos Servidores das Empresas:
     contracts_addresses = {
         "ReservationLedger": rl_contract.address,
+        "TransactionLedger": tl_contract.address,
         "Escrow": escrow_contract.address,
         "ChargingSessionManager": csm_contract.address
     }
