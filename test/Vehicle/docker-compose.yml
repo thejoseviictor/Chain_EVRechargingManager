@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: vehicle_client
-    environment:
-      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
     network_mode: host
     restart: on-failure
