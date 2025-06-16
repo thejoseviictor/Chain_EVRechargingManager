@@ -5,7 +5,7 @@ import os # Para Usar Variáveis de Ambiente.
 from flask import Flask, request, jsonify # Para Criar a API do Servidor e Seus End-Points.
 from web3 import Web3 # Para Comunicação com a Blockchain Ganache.
 import threading # Para Criar Múltiplas Instâncias.
-from ReservationsFile import ReservationsFile # Que Manipula a Persistência de Dados das Reservas.
+from ReservationsManager import ReservationsManager # Que Manipula a Persistência de Dados das Reservas.
 from ChargingStationsFile import ChargingStationsFile # Que Manipula a Persistência de Dados dos Postos de Recarga.
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
 import mqttFunctions # Função para Configurar e Inicializar o MQTT.
@@ -21,8 +21,8 @@ companyName = os.environ.get('COMPANY_NAME') # Variável de Ambiente do Docker C
 SERVER_IP = os.environ.get(f'{companyName.upper()}_SERVER_IP') # IP Definido no Docker-Compose.
 SERVER_PORT = int(os.environ.get(f'{companyName.upper()}_SERVER_PORT')) # Porta Definida no Docker-Compose.
 
-# Criando o Objeto das Reservas no Banco de Dados:
-reservationsData = ReservationsFile()
+# Criando o Objeto de Manipulação das Reservas:
+reservationsData = ReservationsManager()
 
 # Criando o Objeto dos Postos de Recarga no Banco de Dados:
 chargingStationsData = ChargingStationsFile()
