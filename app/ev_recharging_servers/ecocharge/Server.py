@@ -1,4 +1,4 @@
-# Servidor da Empresa "EcoCharge", que Atua no Estado do Ceará ---------------------------------------------------------
+# Servidor da Empresa "EcoCharge", que Atua no Estado do Ceará ----------------------------------------------------
 
 # Importando as Dependências:
 import os # Para Usar Variáveis de Ambiente.
@@ -10,6 +10,7 @@ from ChargingStationsFile import ChargingStationsFile # Que Manipula a Persistê
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
 import mqttFunctions # Função para Configurar e Inicializar o MQTT.
 from Utils import sendReservationsToOtherServers, connectGanacheWeb3, getContractsAddresses
+from ContractUtils import getContractData, startChargingSession
 
 # Criando a Aplicação Flask:
 app = Flask(__name__) # "__name__" se tornará "__main__" ao executar.
@@ -36,18 +37,39 @@ VOLTPOINT_ACCOUNT = int(os.environ.get('VOLTPOINT_ACCOUNT'))
 # Conectando ao Ganache (Web3):
 w3 = connectGanacheWeb3(GANACHE_URL)
 
-# Configurando as Contas do Ganache:
-ecocharge_account = w3.eth.accounts[ECOCHARGE_ACCOUNT]
-eflux_account = w3.eth.accounts[EFLUX_ACCOUNT]
-voltpoint_account = w3.eth.accounts[VOLTPOINT_ACCOUNT]
+# Configurando as Contas das Empresas no Ganache:
+company_accounts = {
+    "ecocharge": w3.eth.accounts[ECOCHARGE_ACCOUNT],
+    "eflux": w3.eth.accounts[EFLUX_ACCOUNT],
+    "voltpoint": w3.eth.accounts[VOLTPOINT_ACCOUNT]
+}
 
 # Recebendo os Endereços dos Contratos pelo "Owner":
 contracts_addresses = getContractsAddresses()
 
-# Rota Para Agendar as Reservas de um Veículo Específico, de Acordo com a Lista da Rota de Reservas (Servidor-Servidor):
+# Formatando os Endereços Para Objetos de Contrato:
+rl_contract = w3.eth.contract(address=contracts_addresses["ReservationLedger"], abi=getContractData("ReservationLedger"))
+escrow_contract = w3.eth.contract(address=contracts_addresses["Escrow"], abi=getContractData("Escrow"))
+csm_contract = w3.eth.contract(address=contracts_addresses["ChargingSessionManager"], abi=getContractData("ChargingSessionManager"))
+
+# Rota Para Agendar as Reservas de um Veículo Específico:
 @app.route('/reservation', methods=['POST'])
 def createReservations():
     pass
+
+# Rota Para Iniciar uma Sessão de Carregamento:
+@app.route('/start_cs', methods=['POST'])
+def startCS():
+    # Tratando os Dados Recebidos:
+    # Esperado: data = {"reservationID": int}
+    data = request.json # Recebendo os Dados em um Dicionário.
+    reservationID = data.get('reservationID')
+    # Solicitando a Inicialização da Sessão de Carregamento na Blockchain:
+    started = startChargingSession(w3, csm_contract, company_accounts[f"{companyName.lower()}"], reservationID)
+    if started:
+        return f"Sucesso ao Iniciar a Sessão de Carregamento da Reserva '{reservationID}'", 200
+    else:
+        return jsonify({"error": "Erro Genérico!"}), 500
 
 # Rodando o Servidor no IP da Máquina:
 if __name__ == '__main__':
