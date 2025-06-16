@@ -218,7 +218,7 @@ contract ReservationLedger {
         return transactionRecords[_transactionID];
     }
 
-    // Função para Retornar Todas as Reservas de um Cliente:
+    // Função para Retornar Auditar as Reservas de um Cliente:
     function getReservationsByCustomer(address _customerAddress) public view returns (Reservation[] memory){
         // Verificando o Endereço:
         require(_customerAddress != address(0), "Endereco do Usuario Invalido!");
@@ -235,5 +235,14 @@ contract ReservationLedger {
         }
 
         return customerResList;
+    }
+
+    // Auditando Todas as Reservas do Contrato:
+    function getAllReservations() public view returns (Reservation[] memory) {
+        Reservation[] memory allResList = new Reservation[](nextReservationID - 1);
+        for (uint256 i = 1; i < nextReservationID; i++) {
+            allResList[i - 1] = reservations[i];
+        }
+        return allResList;
     }
 }
