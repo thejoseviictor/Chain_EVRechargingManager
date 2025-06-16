@@ -1,0 +1,225 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_authorizedServersAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_reservationLedgerAddress",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "transactionID",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "reservationID",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "payer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			}
+		],
+		"name": "TransactionRecorded",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "authorizedServers",
+		"outputs": [
+			{
+				"internalType": "contract AuthorizedServers",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_transactionID",
+				"type": "uint256"
+			}
+		],
+		"name": "getTransactionRecord",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "transactionID",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "reservationID",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "price",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "payer",
+						"type": "address"
+					},
+					{
+						"internalType": "bool",
+						"name": "paid",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "transactionTimestamp",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct TransactionLedger.TransactionRecord",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "nextTransactionID",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_reservationID",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_payer",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "_paid",
+				"type": "bool"
+			}
+		],
+		"name": "recordTransaction",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "reservationLedger",
+		"outputs": [
+			{
+				"internalType": "contract ReservationLedger",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "transactionRecords",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "transactionID",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "reservationID",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "payer",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "paid",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "transactionTimestamp",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]

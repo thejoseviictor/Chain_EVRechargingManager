@@ -1,0 +1,510 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_authorizedServersAddress",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "reservationID",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "customer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "cityCodename",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			}
+		],
+		"name": "ReservationCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "reservationID",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "enum ReservationLedger.Status",
+				"name": "status",
+				"type": "uint8"
+			}
+		],
+		"name": "ReservationStatusUpdated",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "authorizedServers",
+		"outputs": [
+			{
+				"internalType": "contract AuthorizedServers",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_reservationID",
+				"type": "uint256"
+			}
+		],
+		"name": "cancelReservation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_reservationID",
+				"type": "uint256"
+			}
+		],
+		"name": "confirmReservation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_chargingStationID",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_chargingPointID",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "_cityCodename",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_companyName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_chargingPointPower",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_kWhPrice",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_startTimestamp",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_finishTimestamp",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_price",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_customerAddress",
+				"type": "address"
+			}
+		],
+		"name": "createReservation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getAllReservations",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "reservationID",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "chargingStationID",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "chargingPointID",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "cityCodename",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "companyName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "chargingPointPower",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "kWhPrice",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "startTimestamp",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "finishTimestamp",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "price",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address payable",
+						"name": "customer",
+						"type": "address"
+					},
+					{
+						"internalType": "enum ReservationLedger.Status",
+						"name": "status",
+						"type": "uint8"
+					}
+				],
+				"internalType": "struct ReservationLedger.Reservation[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_reservationID",
+				"type": "uint256"
+			}
+		],
+		"name": "getReservation",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "reservationID",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "chargingStationID",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "chargingPointID",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "cityCodename",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "companyName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "chargingPointPower",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "kWhPrice",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "startTimestamp",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "finishTimestamp",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "price",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address payable",
+						"name": "customer",
+						"type": "address"
+					},
+					{
+						"internalType": "enum ReservationLedger.Status",
+						"name": "status",
+						"type": "uint8"
+					}
+				],
+				"internalType": "struct ReservationLedger.Reservation",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_customerAddress",
+				"type": "address"
+			}
+		],
+		"name": "getReservationsByCustomer",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "reservationID",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "chargingStationID",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "chargingPointID",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "cityCodename",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "companyName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "chargingPointPower",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "kWhPrice",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "startTimestamp",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "finishTimestamp",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "price",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address payable",
+						"name": "customer",
+						"type": "address"
+					},
+					{
+						"internalType": "enum ReservationLedger.Status",
+						"name": "status",
+						"type": "uint8"
+					}
+				],
+				"internalType": "struct ReservationLedger.Reservation[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_reservationID",
+				"type": "uint256"
+			}
+		],
+		"name": "markReservationAsPayed",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "nextReservationID",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "reservations",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "reservationID",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "chargingStationID",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "chargingPointID",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "cityCodename",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "companyName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "chargingPointPower",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "kWhPrice",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "startTimestamp",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "finishTimestamp",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address payable",
+				"name": "customer",
+				"type": "address"
+			},
+			{
+				"internalType": "enum ReservationLedger.Status",
+				"name": "status",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
