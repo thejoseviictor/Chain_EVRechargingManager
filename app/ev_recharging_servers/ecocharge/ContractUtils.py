@@ -14,8 +14,8 @@ OWNER_PORT = int(os.environ.get(f'OWNER_PORT'))
 # Caminho dos Contratos:
 CONTRACTS_DIR = 'build/contracts/'
 
-# Chave Privada do Deployer:
-DEPLOYER_PRIVATE_KEY = os.environ.get('DEPLOYER_PRIVATE_KEY')
+# Chave Privada:
+PRIVATE_KEY = os.environ.get('PRIVATE_KEY')
 
 # Conectando ao Ganache e Web3:
 def connectGanacheWeb3(GANACHE_URL: str):
@@ -55,9 +55,9 @@ def createReservationBlockchain(w3: Web3, contract, server_account, vehicleID: i
         assert isinstance(data["finishTimestamp"], int)
         assert isinstance(data["chargingPointPower"], int)
         assert Web3.is_address(data["customerAddress"]), "Endereço inválido"
-        # Enviando os Dados:
+        # Construindo a Transação:
         print(f"Criando uma Reserva na Blockchain Para '{vehicleID}' em '{data["cityCodename"]}'\n")
-        tx_hash = contract.functions.createReservation(
+        transaction = contract.functions.createReservation(
             data["chargingStationID"],
             data["chargingPointID"],
             data["cityCodename"],
@@ -68,13 +68,18 @@ def createReservationBlockchain(w3: Web3, contract, server_account, vehicleID: i
             data["finishTimestamp"],
             data["price"],
             data["customerAddress"]
-        ).transact({
-            'from': server_account,
-            "nonce": w3.eth.get_transaction_count(server_account),
-            'gasPrice': w3.eth.gas_price,
-            "gas": 3000000,
-            "chainId": w3.eth.chain_id
+        ).build_transaction({
+                "from": server_account,
+                "nonce": w3.eth.get_transaction_count(server_account),
+                "gasPrice": w3.eth.gas_price,
+                "gas": 3000000,
+                "chainId": w3.eth.chain_id,
         })
+        # Assinando a Transação:
+        signed_tx = w3.eth.account.sign_transaction(transaction, private_key=PRIVATE_KEY)
+        # Enviando a Transação:
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+        # Esperando Pela Mineração do Bloco e Obtendo o Recibo da Transação:
         w3.eth.wait_for_transaction_receipt(tx_hash)
     except Exception as e:
         print(f"Erro ao Criar Uma Reserva na Blockchain Para '{vehicleID}' em '{data["cityCodename"]}: {e}\n")
