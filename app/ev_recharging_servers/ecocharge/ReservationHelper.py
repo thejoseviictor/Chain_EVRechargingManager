@@ -78,11 +78,11 @@ def chooseChargingStations(vehicleID: int, departureCityCodename: str, arrivalCi
                 return None
 
 # Escolher um Ponto de Carregamento para o Veículo:
-def chooseChargingPoint(chargingStationID: int):
+def chooseChargingPoint(chargingStationID: int, rl_contract):
     # Calcular o Ponto de Carregamento Sem Reservas ou Com Reserva Que Acaba Mais Cedo:
     chargingPointsList = ChargingPointsFile() # Lendo Dados do Arquivo ".json".
     cp = chargingPointsList.listChargingPoints(chargingStationID) # Listando Todos os Pontos de Carregamento do Posto de Recarga.
-    reservationsList = ReservationsManager() # Lendo Dados do Arquivo ".json".
+    reservationsList = ReservationsManager(rl_contract) # Lendo Dados da Blockchain.
     reservations = reservationsList.listReservations(chargingStationID) # Listando Todos as Reservas Para o Posto de Recarga.
     chargingPointID = None # Inicializando o ID do Ponto de Carregamento a Ser Escolhido.
     # Verificando Se Existem Pontos de Carregamento para o Posto de Recarga, Cadastrados no Banco de Dados:
