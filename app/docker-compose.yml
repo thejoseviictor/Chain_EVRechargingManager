@@ -5,8 +5,6 @@ services:
   ganache:
     image: trufflesuite/ganache:v7.9.2
     container_name: ganache
-    env_file:
-      - ./ganache/.env
     ports:
       - "8545:8545"
     command: 
