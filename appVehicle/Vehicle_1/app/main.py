@@ -29,7 +29,7 @@ from pathlib import Path
 import paho.mqtt.client as mqtt
 import json # Biblioteca usada para trabalhar com arquivos .json e importar dados fictícios para o sistema
 
-from web3 import Web3
+from web3 import Web3 # Biblioteca para comunicação e controle com o Ganache
 
 #--------------------------------------------------------------------------------------------------------------
 
@@ -51,6 +51,7 @@ DATA_PATH = BASE_DIR / 'dataPath' # Caminho da pasta "dataPath"
 
 #Definindo o caminho de cada arquivo de dados
 dataFilePath = str(DATA_PATH / 'data.json')
+abiFilePath = str(DATA_PATH / 'abi.json')
 reservationsFilePath = str(DATA_PATH / 'reservations.json')
 
 # Métodos utilitários --------------------------------------------------------------------------
@@ -62,18 +63,35 @@ utility = VehicleUtility()
 
 #------------------------------------------------------------------------------------------------
 
+ganache_URL = os.environ.get("GANACHE_URL")
+
+an = os.environ.get("ACCOUNT_NUMBER")
+
+account_number = 1
+
+if an:
+    account_number = int(an) # Número da conta Ganache utilizada pelo respectivo veículo(0-9). Deve ser alterado no docker-compose para cada conta nova de veículo.
+
 repeat = True # Variavel usada para lidar com o fluxo de repetição do programa.
 firstLogin = True # Variavel para indicar que apenas um login é preciso por execução.
 
-contractAddress = "" # Variavel para receber o endereço de contrato do servidor
-route = []
-accountAddress = ""
-typeSubscribe = 0 # Variavel para definir o tipo de subscribe ( ou recebe o endereço de contrato(1) ou recebe a resposta do servidor ao realizar as reservas((2) )
+account_address = '' # Variavel para determinar o endereço de conta Ganache
+contracts_addresses = {} # Variavel para receber o endereço de contrato do servidor
 
-accountNumber = 0 # Número da conta Ganache utilizada pelo respectivo veículo(0-9). Deve ser alterado para cada conta nova de veículo.
+type_subscribe = 0 # Variavel para definir o tipo de publish/subscribe na classe de comunicação 'VehicleClient'
 
+ID_reservation = ''
 
-utility.clearTerminal()
+''' 
+    ^ Os valores e suas respectivas descrições são :
+
+    1 - Para receber todos os endereços de contrato (AuthorizedServers.sol, ChargingSession.sol, Escrow.sol e ReservationLedger.sol)
+    2 - Para solicitar reserva e receber os IDs correspondentes
+    3 - Para iniciar uma recarga
+    4 - Para finalizar uma recarga
+
+'''
+route = ['','']
 
 #------------------------------------------------------------------------------------------------
 
@@ -124,14 +142,6 @@ maximumBattery = random.randint(51,100) # A capacidade máxima da bateria é ger
 vehicle = Vehicle(vid = vid, owner = owner, licensePlate = licensePlate, moneyCredit = moneyCredit, currentEnergy = currentEnergy, maximumBattery = maximumBattery)
 
 # ---------------------------------------------------------------------------------------------
-''' Revisar essa parte do código (R)
-
-reservations = []
-
-with open(reservationsFilePath, 'w') as f: # Limpando as reservas da conta anterior do arquivo "reservations.json" 
-    json.dump(reservations, f, indent=4)
-'''
-# ---------------------------------------------------------------------------------------------
         
 vehicle.savingLoginData(dataFilePath) # Salvando os dados pertinentes
 # obs: O arquivo "data.json" tem os dados salvos
@@ -139,19 +149,24 @@ vehicle.savingLoginData(dataFilePath) # Salvando os dados pertinentes
 #------------------------------------------------------------------------------------------------
 # Definindo conexão MQTT 
 
-client = mqtt.Client()
+client_MQTT = mqtt.Client()
 #------------------------------------------------------------------------------------------------
-typeSubscribe = 1
-vClient = VehicleClient(client, vehicle, route, accountAddress, accountNumber, typeSubscribe)
+
+# Descobrindo os endereços de contrato através da comunicação MQTT com o servidor
+
+type_subscribe = '1'
+vClient = VehicleClient(client_MQTT, vehicle, route, account_number, ID_reservation, type_subscribe)
 #------------------------------------------------------------------------------------------------
 # Definindo conexão com ganache(Blockchain local)
 
-w3 = Web3(Web3.HTTPProvider("http://localhost:7545"))
-accountAddress = w3.eth.accounts[accountNumber]
+w3 = Web3(Web3.HTTPProvider(ganache_URL))
+account_address = w3.eth.accounts[account_number]
 
 #------------------------------------------------------------------------------------------------
 
 # Início do sistema ->
+
+utility.clearTerminal()
 
 utility.startAnimation() # Função para gerar uma pequena animação na primeira execução do programa
     
@@ -165,7 +180,7 @@ while(repeat):
     ownerTemplate = User(cpf="", name="", email="", password="")
     vehicleTemplate = Vehicle( vid= "", owner= ownerTemplate, licensePlate= "", moneyCredit= 0.0, currentEnergy= 0, maximumBattery=0)
             
-    vehicleTemplate.loadingData(dataFilePath, reservationsFilePath)
+    vehicleTemplate.loadingData(dataFilePath)
 
     if firstLogin :
 
@@ -214,7 +229,7 @@ while(repeat):
         1. A opção 1 é para realizar a reserva, onde a origem e o destino da viagem é determinado e passado para o servidor via comunicação MQTT
         2. A opção 2 é usada para ver a(s) reserva(s) do veículo já realizadas
         3. A opção 3 é para ver as informações de conta
-        4. A opção 4 é para adicionar credito na conta
+        4. A opção 4 é para iniciar ou finalizar recarga
         5. A opção 5 permite voltar para o início do programa
         6. Interrompe totalmente o programa
 
@@ -242,7 +257,7 @@ while(repeat):
 
                 route = utility.defineRoute(origin, destination)
 
-                if route == False:
+                if route[0] == "false" or route[1] == "false":
                     print("\t Digite dados validos ! ")
 
                     time.sleep(2)
@@ -253,13 +268,14 @@ while(repeat):
 
                     wrongCities = False
 
-                    typeSubscribe = 2
-                    vClient = VehicleClient(client, vehicle, route, accountAddress, accountNumber, typeSubscribe)
+                    type_subscribe = '2'
+                    vClient = VehicleClient(client_MQTT, vehicle, route, account_number, ID_reservation, type_subscribe)
 
             
         elif reply == "2" : # Opção 2: Ver reservas
+            contract = contracts_addresses["ReservationLedger"]
 
-            vehicle.showReservations()
+            vehicle.showReservations(w3, account_address, contract, abiFilePath)
             utility.writeReplyBack(wrongActions, repeat)
         
         elif reply == "3": # Opção 3: Mostrar informações de conta
@@ -267,13 +283,38 @@ while(repeat):
             vehicle.showInformations()
             utility.writeReplyBack(wrongActions, repeat)
 
-        elif reply == "4": # Opção 4: Adicionar crédito na conta
+        elif reply == "4": # Opção 4: Iniciar ou finalizar reserva
 
-            money = input("Qual valor (R$) deseja adicionar ao saldo da conta ? \n ->")
-            value = float(money.replace(",","."))
+            type_recharge = '0'
 
-            vehicle.updateCredit(dataFilePath, value, "+")
-            utility.writeReplyBack(wrongActions, repeat)
+            answer_recharge = input("O que deseja fazer ? \n\t 1. Iniciar carregamento \n\t 2. Finalizar carregamento \n\t -> ")
+
+            if answer_recharge == '1' :
+
+                vehicle.showReservations(w3, account_address, contract, abiFilePath)
+                
+                ID_reservation = input ('Digite o ID da reserva que deseja iniciar a recarga : \n\t ->')
+                
+                utility.clearTerminal()
+                type_subscribe = '3'
+                vClient = VehicleClient(client_MQTT, vehicle, route, account_number, ID_reservation, type_subscribe)
+                
+                type_recharge = '1'
+                vehicle.manageRecharge(type_recharge, ID_reservation)
+
+            else:
+                
+                vehicle.showRecharges()
+
+                ID_reservation = input ('Digite o ID da reserva que deseja finalizar a recarga : \n\t ->')
+
+                utility.clearTerminal()
+                
+                type_subscribe = '4'
+                vClient = VehicleClient(client_MQTT, vehicle, route, account_number, ID_reservation, type_subscribe)
+
+                type_recharge = '2'
+                vehicle.manageRecharge(type_recharge,ID_reservation)
 
         elif reply == "5": # Opção 5: Voltar para o início do programa
             wrongActions = False

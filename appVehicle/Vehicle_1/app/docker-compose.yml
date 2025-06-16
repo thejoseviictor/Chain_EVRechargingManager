@@ -14,6 +14,11 @@ services:
     build:
       context: . # Diretório do Dockerfile
       dockerfile: Dockerfile
+    ports:
+      - '8545:8545'
+    environment:
+      GANACHE_URL: "http://localhost:8545" # URL de acesso ao docker ganache
+      ACCOUNT_NUMBER: "1" # Indice de conta ganache, deve ser alterado para cada veículo criado
     
     container_name: vehicle_client # Nome do container ao ser buildado
     

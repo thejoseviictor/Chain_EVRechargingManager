@@ -1,27 +1,32 @@
 from dataclasses import dataclass
+
 from pathlib import Path
 
 
 from User import User
 from VehicleUtility import VehicleUtility
 
+import datetime # Biblioteca para tratar datas e horarios
 import random
 import json
 import time
+
+from web3 import Web3
 
 @dataclass
 class Vehicle:
 
     def __init__(self, vid, owner, licensePlate, moneyCredit, currentEnergy, maximumBattery):
-        self.vid: str
-        self.owner: User
-        self.licensePlate: str
-        self.moneyCredit: float
+        self.vid = vid
+        self.owner = owner
+        self.licensePlate = licensePlate
+        self.moneyCredit = moneyCredit
 
-        self.currentEnergy: int
-        self.maximumBattery : int
+        self.currentEnergy = currentEnergy
+        self.maximumBattery = maximumBattery
 
-        self.reservations = [] # Guarda as reservas
+        self.reservationsList = [] # Guarda as reservas
+        self.recharge_list = [] # Guarda os IDs de reservas que estão em recarga
 
         self.utility = VehicleUtility()
 
@@ -37,31 +42,46 @@ class Vehicle:
          print(f"\n\t Capacidade total da bateria(kWh) : {self.maximumBattery}%")
          
 
-    def showReservations(self): # Método para visualizar todas as reservas efetuadas para o veículo
-
-        if self.reservations :
-
-            print("Reservas efetuadas: \n")
-
-            for r in self.reservations:
-                
-                print(" ---------------------------------------------- ")
-                print(f" ID da reserva: {r['reservationID']} \n")
-                print(f" ID do posto: {r['chargingStationID']} \n")
-                print(f" ID do ponto de recarga: {r['chargingPointID']} \n")
-                print(f" Potência do ponto de carregamento: {r['chargingPointPower']} \n")
-                print(f" Preço por kWh: {r['kWhPrice']} \n")
-                print(f" ID do veículo: {r['vehicleID']} \n")
-                print(f" Início da recarga: {r['startDateTime']} \n")
-                print(f" Fim da recarga: {r['finishDateTime']} \n")
-                print(f" Duração : {r['duration']} \n")
-                print(f" Preço : {r['price']} \n")
-                print(" ---------------------------------------------- ")
+    def showReservations(self, w3, account_address, contract_address, abiFilePath): # Método para visualizar todas as reservas efetuadas para o veículo na blockchain
         
-        else:
+        current_list = []
 
-            print("Não há reservas no momento !")
-            time.sleep(3)
+        with open(abiFilePath, 'r') as f:
+            abi = json.load(f)
+        
+        w3.eth.contract(address=contract_address, abi=abi)
+         
+        contractAddress = w3.to_checksum_address(contract_address)
+
+        contract = w3.eth.contract(address=contractAddress, abi=abi)
+
+        reservations = contract.functions.getReservationsByCustomer(account_address).call()
+
+        for res in reservations:
+            
+            res_dict = {
+                "reservationID": res[0],
+                "chargingStationID": res[1],
+                "chargingPointID": res[2],
+                "cityCodename": res[3],
+                "companyName": res[4],
+                "chargingPointPower": res[5],
+                "kWhPrice": res[6],
+                "startTimestamp": datetime.datetime.fromtimestamp(res[7]).isoformat(),
+                "finishTimestamp": datetime.datetime.fromtimestamp(res[8]).isoformat(),
+                "price": res[9], 
+                "customer": res[10],
+                "status": res[11]
+            }
+            
+            current_list.append(res_dict)
+        
+        self.reservationsList = current_list
+
+        for r in self.recharge_list:
+            print(r)
+            print('----------------------------------------------------------')
+
    
 
     def savingLoginData(self, dataFilePath: str): # Método para salvar novos dados gerados na opção "2 - CRIAR CONTA"
@@ -110,7 +130,7 @@ class Vehicle:
         time.sleep(3)
         self.utility.clearTerminal()
 
-    def loadingData(self, dataFilePath: str, reservationsFilePath: str): # Método para carregar dados de conta (dados gerados e salvos anteriormente)
+    def loadingData(self, dataFilePath: str): # Método para carregar dados de conta (dados gerados e salvos anteriormente)
 
             with open(dataFilePath, 'r') as f:
                 data = json.load(f)
@@ -125,25 +145,18 @@ class Vehicle:
             self.currentEnergy = int(data["currentEnergy"])
             self.maximumBattery = int(data["maximumBattery"])
             
-            with open(reservationsFilePath, 'r') as f:
-                listReservations = json.load(f)
+    
+    def manageRecharge(self, type_recharge: str, ID_reservation: str):
+        
+        if type_recharge == '1':
+            self.recharge_list.append(ID_reservation)
+        
+        else:
+            for r, id in enumerate(self.recharge_list):
+                if ID_reservation == id:
+                    self.recharge_list.remove(id)
 
-            self.reservations = listReservations
-
-    def keepReservations(self, reservationsFilePath: str, newReservations: list[dict]): # Salvando as novas reservas num json "reservations.json"
-
-        with open(reservationsFilePath, 'r') as f:
-              data = json.load(f)
+    def showRecharges(self):
         
-        for r in newReservations:
-            self.reservations.append(r)
-            data.append(r)
-        
-        with open(reservationsFilePath, 'w') as f:
-            json.dump(data, f, indent=4)
-        
-        
-
-        
-        
-        
+        for r in self.recharge_list:
+            print(r)

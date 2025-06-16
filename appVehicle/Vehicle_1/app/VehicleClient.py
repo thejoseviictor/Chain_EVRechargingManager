@@ -13,17 +13,16 @@ import time
 @dataclass
 class VehicleClient:
 
-    def __init__(self, client, vehicle: Vehicle, Route: list, accountAddress: str, accountNumber: int, typeSubscribe: int):
+    def __init__(self, client, vehicle: Vehicle, Route: list, account_number: int, ID_reservation: str, type_subscribe: str):
         
         self.client = client
         self.serverHOST = 'localhost'
         self.serverPORT = 1883
         self.cost = 0.0
-        self.reservations = []
-        self.typeSubscribe = typeSubscribe
+        self.type_subscribe = type_subscribe
+        self.ID_reservation = ID_reservation
 
-        self.message = None
-        self.request = None
+        self.vehicle = vehicle
 
         self.utility = VehicleUtility()
         
@@ -33,8 +32,7 @@ class VehicleClient:
             "batteryCapacity" : vehicle.maximumBattery ,
             "departureCityCodename" : Route[0] ,
             "arrivalCityCodename" : Route[1] ,
-            "accountAddress" : accountAddress ,
-            "accountNumber" : accountNumber
+            "accountNumber" : account_number
         }
 
         self.client.on_connect = self.on_connect
@@ -54,17 +52,26 @@ class VehicleClient:
         if rc == 0:
             print(f" \t Conexão estabelecida ! ")
             
-            if self.typeSubscribe == 1 :
+            if self.type_subscribe == 1 :
             
-                self.client.subscribe("server/receive_contractAddress/vehicle") # Realiza a inscrição para receber endereço de contrato
+                self.client.subscribe("server/contracts_addresses/vehicle") # Realiza a inscrição para receber os endereços de contrato
             
-            else:
+            elif self.type_subscribe == 2 :
                 
                 self.client.subscribe("server/create_reservations/vehicle") # Realiza a inscrição para receber resposta de reservas efetuadas ou não
 
                 # Cria um json baseado no dicionário "vData" e envia as informações para o servidor correspondente.
                 self.client.publish("vehicle/create_reservations/server", json.dumps(self.vData))
-        
+
+
+            elif self.type_subscribe == 3 :
+                self.client.subscribe("server/start_charging_session/vehicle")
+                self.client.publish("vehicle/start_charging_session/server", self.ID_reservation)
+            
+            elif self.type_subscribe == 4 :
+                self.client.subscribe("server/end_charging_session/vehicle")
+                self.client.publish("vehicle/end_charging_session/server",self.ID_reservation)
+
         else:
             print(f" \u274C Falha na conexão. Código de retorno: {rc}")
             time.sleep(3)
@@ -77,20 +84,53 @@ class VehicleClient:
 
         rMessage = msg.payload.decode()
 
-        if self.typeSubscribe == 1:
+        if self.type_subscribe == 1:
+            global contract_address # Variavel global utilizada para obter o endereço de contrato
+            contract_address = rMessage
 
-             # Pega o dado recebido e o exibe
-            print(" Mensagem recebida:", repr(rMessage))
-            time.sleep(5)
 
-            self.message = json.loads(rMessage)
-            print(self.message)
+        elif self.type_subscribe == 2:
 
-        
-        else:
+            print("IDs de reserva recebidas: \n")
+            
+            # Pega os IDs de reserva recebidos, exibe, guarda na lista de reservas e salva no arquivo reservations.json
+            for r in rMessage :
+                
+                print(repr(r))
+                print('------------------------------')
 
-            global contractAddress # Variavel global utilizada para obter o endereço de contrato
-            contractAddress = rMessage
+                self.vehicle.reservationsList.append(r)
+                
+            #json.loads(rMessage)
+
+
+        elif self.type_subscribe == 3:
+            
+            key = rMessage.keys()[0]
+
+            if key == "success" :
+                print('')
+            
+            elif key == "error" :
+                print('')
+            
+            else :
+                print('')
+
+
+        elif self.type_subscribe == 4:
+            
+            key = rMessage.keys()[0]
+
+            if key == "success" :
+                print('')
+            
+            elif key == "error" :
+                print('')
+            
+            else :
+                print('')
+            
             
     
     def on_publish(self, client, userdata, mid):

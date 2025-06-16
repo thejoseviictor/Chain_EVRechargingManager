@@ -68,9 +68,6 @@ class VehicleUtility:
                 
             else:
                 route[t] = "false"
-        
-        if route[0] == "false" or route[1] == "false" :
-            return False
 
         return route
     
@@ -109,4 +106,3 @@ class VehicleUtility:
         title = "\t ------------- veHI : Sistema de recarga para veículos elétricos -------------\n"
         print(title)
         time.sleep(2)
-
