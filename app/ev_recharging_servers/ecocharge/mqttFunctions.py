@@ -116,11 +116,11 @@ def mqttCreateReservations(client, action: str, vehicleData: dict):
         # Verificando Se Todas as Respostas Foram de Sucesso:
         if success:
             client.publish(publisherTopic, str({"success": vehicleID}))
-            # MARCAR RESERVAS COMO CONCLUIDAS
+            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/confirm_res', json=json, timeout=5)
             print(f"Todas as Reservas Para o Veículo '{vehicleID}' Foram Agendadas Com Sucesso!\n")
         else:
             client.publish(publisherTopic, str({"error": vehicleID}))
-            # MARCAR RESERVAS COMO CANCELADAS
+            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/cancel_res', json=json, timeout=5)
             print(f"Alguns Servidores Retornaram Erro nas Reservas Para o Veículo '{vehicleID}'.")
     # Tratando as Exceções, Se o Servidor Não Responder:
     except Exception as e:
