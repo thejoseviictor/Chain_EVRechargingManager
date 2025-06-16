@@ -124,16 +124,16 @@ class ReservationsManager:
                                          actualBatteryPercentage, batteryCapacity, lastReservationFinishDateISO, timeToReach)
             # Estruturando a Reserva:
             createdReservation = ({
-                "chargingStationID": reservationObj.chargingStationID,
-                "chargingPointID": reservationObj.chargingPointID,
-                "cityCodename": reservationObj.cityCodename,
-                "companyName": reservationObj.companyName,
-                "chargingPointPower": reservationObj.chargingPointPower,
-                "kWhPrice": int(reservationObj.kWhPrice),
+                "chargingStationID": int(reservationObj.chargingStationID),
+                "chargingPointID": int(reservationObj.chargingPointID),
+                "cityCodename": str(reservationObj.cityCodename),
+                "companyName": str(reservationObj.companyName),
+                "chargingPointPower": int(reservationObj.chargingPointPower),
+                "kWhPrice": int(Web3.to_wei(reservationObj.kWhPrice, 'ether')),
                 "startTimestamp": int(datetime.datetime.fromisoformat(reservationObj.startDateISO).timestamp()),
                 "finishTimestamp": int(datetime.datetime.fromisoformat(reservationObj.finishDateISO).timestamp()),
-                "price": Web3.to_wei(reservationObj.price, 'ether'),
-                "customerAddress": customerAddress
+                "price": int(Web3.to_wei(reservationObj.price, 'ether')),
+                "customerAddress": str(customerAddress)
             })
             
             return createdReservation # Retornando a Estrutura da Reserva Formatada.
