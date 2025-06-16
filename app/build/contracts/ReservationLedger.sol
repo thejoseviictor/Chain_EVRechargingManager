@@ -17,6 +17,7 @@ contract ReservationLedger {
     // Dados da Reserva:
     struct Reservation {
         uint256 reservationID;
+        uint256 chargingStationID;
         uint256 chargingPointID;
         string cityCodename;
         string companyName;
@@ -24,7 +25,6 @@ contract ReservationLedger {
         uint256 kWhPrice; // Em "wei", Menor Unidade de Valor do Ethereum.
         uint256 startDateTime; // Converter ISO para "timestamp".
         uint256 finishDateTime;
-        uint256 durationHours; // Duração em Horas.
         uint256 price; // Preço em "wei".
         address payable customer; // Endereço da Carteira do Cliente, Para Pagamentos.
         Status status;
@@ -81,6 +81,7 @@ contract ReservationLedger {
 
     // Criando uma Nova Reserva:
     function createReservation(
+        uint256 _chargingStationID,
         uint256 _chargingPointID,
         string memory _cityCodename,
         string memory _companyName,
@@ -88,16 +89,14 @@ contract ReservationLedger {
         uint256 _kWhPrice,
         uint256 _startDateTime,
         uint256 _finishDateTime,
-        uint256 _durationHours,
+        uint256 _price,
         address _customerAddress // Endereço da Carteira do Cliente.
     ) public onlyServerOrOwner returns (uint256) {
-        // Calculando o Preço: Potência do Carregador * Duração em Horas * Preço kWh do Carregador
-        uint256 price = _chargingPointPower * _durationHours * _kWhPrice;
-
         // Criando a Reserva:
         uint256 newReservationID = nextReservationID;
         reservations[newReservationID] = Reservation({
             reservationID: newReservationID,
+            chargingStationID: _chargingStationID,
             chargingPointID: _chargingPointID,
             cityCodename: _cityCodename,
             companyName: _companyName,
@@ -105,8 +104,7 @@ contract ReservationLedger {
             kWhPrice: _kWhPrice,
             startDateTime: _startDateTime,
             finishDateTime: _finishDateTime,
-            durationHours: _durationHours,
-            price: price,
+            price: _price,
             customer: payable(_customerAddress),
             status: Status.PENDING
         });
@@ -122,7 +120,7 @@ contract ReservationLedger {
             newReservationID,
             _customerAddress,
             _cityCodename,
-            price
+            _price
         );
 
         // Retornando o ID da Reserva:
