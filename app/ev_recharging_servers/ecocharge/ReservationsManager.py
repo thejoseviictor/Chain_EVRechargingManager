@@ -42,7 +42,7 @@ class Reservation:
     # Calcula a Data Que o Veículo Irá Terminar de Usar o Ponto de Carregamento, de Acordo com a Duração da Recarga em Horas:
     # Data de Finalização = Data de Ínicio + Duração de Carregamento em Horas
     def calculateFinishDateISO(self):
-        start = datetime.datetime.fromisoformat(self.startDateTime) # Decodificando a Data de Ínicio do Formato ISO para DateTime.
+        start = datetime.datetime.fromisoformat(self.startDateISO) # Decodificando a Data de Ínicio do Formato ISO para DateTime.
         finish = start + datetime.timedelta(hours=self.duration) # Calculando a Data de Finalização.
         return finish.isoformat() # Codificando a Data de Finalização do DateTime para Formato ISO.
 
@@ -93,7 +93,7 @@ class ReservationsManager:
         # Percorrendo a Lista de Reservas:
         for reservation in self.reservationsList:
             if reservation["chargingStationID"] == chargingStationID and reservation["chargingPointID"] == chargingPointID :
-                dateTimeInFile = datetime.datetime.fromisoformat(reservation["finishDateTime"]) # Decodificando a Data na Lista para DateTime.
+                dateTimeInFile = datetime.datetime.fromisoformat(reservation["finishDateISO"]) # Decodificando a Data na Lista para DateTime.
                 # Salvando, Se a Data na Lista For Posterior:
                 if lastDateTime < dateTimeInFile:
                     found = True # Alterando o Status de Data Posterior Encontrada.
