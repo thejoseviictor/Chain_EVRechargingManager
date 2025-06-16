@@ -7,7 +7,6 @@ import json
 import time
 import requests
 from ReservationsManager import ReservationsManager
-from Server import rl_contract, company_accounts
 
 # Salvando as Informações do Owner:
 OWNER_IP = os.environ.get(f'OWNER_IP')
@@ -15,9 +14,6 @@ OWNER_PORT = int(os.environ.get(f'OWNER_PORT'))
 
 # Caminho dos Contratos:
 CONTRACTS_DIR = 'build/contracts/'
-
-# Criando o Objeto de Manipulação das Reservas:
-reservationsManager = ReservationsManager(rl_contract)
 
 # Conectando ao Ganache e Web3:
 def connectGanacheWeb3(GANACHE_URL: str):
@@ -108,7 +104,9 @@ def startChargingSession(w3: Web3, contract, server_account, reservationID: int)
 
 
 # Marcando Todas as Reservas Pendentes de Um Usuário Como Confirmadas e Criando o Escrow:
-def markReservationsAsConfirmed(w3: Web3, rl_contract, escrow_contract, server_account, customerAddress):
+def markReservationsAsConfirmed(w3: Web3, rl_contract, escrow_contract, server_account, customerAddress, company_accounts):
+    # Criando o Objeto de Manipulação das Reservas:
+    reservationsManager = ReservationsManager(rl_contract)
     reservationsManager.getReservationsOnBlockchain(rl_contract)
     res_list = reservationsManager.reservationsList
     # Percorrendo as Reservas:
@@ -156,6 +154,8 @@ def markReservationsAsConfirmed(w3: Web3, rl_contract, escrow_contract, server_a
 
 # Marcando Todas as Reservas de Um Cliente Como Canceladas:
 def markReservationsAsCanceled(w3: Web3, rl_contract, server_account, customerAddress):
+    # Criando o Objeto de Manipulação das Reservas:
+    reservationsManager = ReservationsManager(rl_contract)
     reservationsManager.getReservationsOnBlockchain(rl_contract)
     res_list = reservationsManager.reservationsList
     # Percorrendo as Reservas:
