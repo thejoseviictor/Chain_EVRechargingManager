@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 // Importando as Dependências dos Outros Contratos:
 import "./AuthorizedServers.sol";
 import "./ReservationLedger.sol";
+import "./TransactionLedger.sol";
 import "./Escrow.sol";
 
 contract ChargingSessionManager {
@@ -13,6 +14,7 @@ contract ChargingSessionManager {
     // Referência aos Contratos "AuthorizedServers", "ReservationLedger" e "Escrow":
     AuthorizedServers public authorizedServers;
     ReservationLedger public reservationLedger;
+    TransactionLedger public transactionLedger;
     Escrow public escrow;
 
     // Status da Sessão de Recarga:
@@ -42,10 +44,11 @@ contract ChargingSessionManager {
     }
 
     // Construtor:
-    constructor(address _authorizedServersAddress, address _reservationLedgerAddress, address _escrowAddress) {
+    constructor(address _authorizedServersAddress, address _reservationLedgerAddress, address _transactionLedger, address _escrowAddress) {
         owner = msg.sender;
         authorizedServers = AuthorizedServers(_authorizedServersAddress);
         reservationLedger = ReservationLedger(_reservationLedgerAddress);
+        transactionLedger = TransactionLedger(_transactionLedger);
         escrow = Escrow(_escrowAddress);
     }
 
@@ -88,7 +91,7 @@ contract ChargingSessionManager {
         session.status = SessionStatus.FINISHED;
 
         // Registrando a Transação da Reserva no "ReservationLedger":
-        reservationLedger.recordTransaction(
+        transactionLedger.recordTransaction(
             _reservationID,
             escrow.getEscrowPaymentStatus(_reservationID).payer, // Endereço da Carteira do Cliente.
             true // Status de Pagamento.
