@@ -2,4 +2,3 @@ flask
 requests
 paho-mqtt
 web3
-aiohttp
