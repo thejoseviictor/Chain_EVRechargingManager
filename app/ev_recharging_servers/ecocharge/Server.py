@@ -9,7 +9,9 @@ from ReservationsManager import ReservationsManager # Que Manipula a Persistênc
 from ChargingStationsFile import ChargingStationsFile # Que Manipula a Persistência de Dados dos Postos de Recarga.
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
 import mqttFunctions # Função para Configurar e Inicializar o MQTT.
-from ContractUtils import connectGanacheWeb3, getContractsAddresses, getContractData, createReservationBlockchain, startChargingSession, markReservationAsPayed
+from ContractUtils import connectGanacheWeb3, getContractsAddresses, getContractData
+from ContractUtils import createReservationBlockchain, startChargingSession, markReservationAsPayed
+from ContractUtils import markReservationsAsConfirmed, markReservationsAsCanceled
 
 # Criando a Aplicação Flask:
 app = Flask(__name__) # "__name__" se tornará "__main__" ao executar.
@@ -103,6 +105,35 @@ def createReservations():
     
     # Retorno de Sucesso:
     return f"Sucesso ao Realizas as Reservas do Veículo '{vehicleID}'", 200
+
+# Rota Para Marcar as Reservas do Cliente Como Confirmadas e Fazer Escrow:
+@app.route('/confirm_res', methods=['POST'])
+def startCS():
+    # Tratando os Dados Recebidos:
+    # Esperado: data = {"vehicleID": int, "customerAddress": hex}
+    data = request.json # Recebendo os Dados em um Dicionário.
+    vehicleID = data.get('vehicleID')
+    customerAddress = data.get('customerAddress')
+    # Solicitando as Confirmações e Escrows das Reservas na Blockchain:
+    confirmed = markReservationsAsConfirmed(w3, rl_contract, escrow_contract, company_accounts[f"{companyName.lower()}"], customerAddress)
+    if confirmed:
+        return f"Sucesso ao Confirmar as Reservas do Veículo '{vehicleID}'", 200
+    else:
+        return jsonify({"error": "Erro Genérico!"}), 500
+
+# Rota Para Marcar as Reservas do Cliente Como Canceladas:
+@app.route('/confirm_res', methods=['POST'])
+def startCS():
+    # Tratando os Dados Recebidos:
+    # Esperado: data = {"vehicleID": int, "customerAddress": hex}
+    data = request.json # Recebendo os Dados em um Dicionário.
+    vehicleID = data.get('vehicleID')
+    customerAddress = data.get('customerAddress')
+    confirmed = markReservationsAsCanceled(w3, rl_contract, company_accounts[f"{companyName.lower()}"], customerAddress)
+    if confirmed:
+        return f"Sucesso ao Cancelar as Reservas do Veículo '{vehicleID}'", 200
+    else:
+        return jsonify({"error": "Erro Genérico!"}), 500
 
 # Rota Para Iniciar uma Sessão de Carregamento:
 @app.route('/start_cs', methods=['POST'])
