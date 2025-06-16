@@ -65,8 +65,8 @@ class ReservationsManager:
                 "companyName": res[4],
                 "chargingPointPower": res[5],
                 "kWhPrice": res[6],
-                "startTimestamp": datetime.utcfromtimestamp(res[7]).isoformat(),
-                "finishTimestamp": datetime.utcfromtimestamp(res[8]).isoformat(),
+                "startTimestamp": datetime.datetime.fromtimestamp(res[7]).isoformat(),
+                "finishTimestamp": datetime.datetime.fromtimestamp(res[8]).isoformat(),
                 "price": res[9],
                 "customer": res[10],
                 "status": res[11]
@@ -130,8 +130,8 @@ class ReservationsManager:
                 "companyName": reservationObj.companyName,
                 "chargingPointPower": reservationObj.chargingPointPower,
                 "kWhPrice": reservationObj.kWhPrice,
-                "startTimestamp": int(datetime.fromisoformat(reservationObj.startDateISO).timestamp()),
-                "finishTimestamp": int(datetime.fromisoformat(reservationObj.finishDateISO).timestamp()),
+                "startTimestamp": int(datetime.datetime.fromisoformat(reservationObj.startDateISO).timestamp()),
+                "finishTimestamp": int(datetime.datetime.fromisoformat(reservationObj.finishDateISO).timestamp()),
                 "price": Web3.to_wei(reservationObj.price, 'ether'),
                 "customerAddress": customerAddress
             })
