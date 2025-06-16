@@ -39,14 +39,21 @@ def getContractsAddresses():
         print(f"Erro ao Receber os Endereços dos Contratos: {e}\n")
         return None
 
-# Carregando o "ABI" de Um Contrato Compilado:
+# Carregando o "ABI" e o "bytecode" de Um Contrato Compilado:
 def getContractData(contract_name: str):
     with open(f"{CONTRACTS_DIR}{contract_name}.abi", 'r') as abi_file:
         abi = json.loads(abi_file.read()) # Lendo Como Dicionário.
-    return abi
+    with open(f"{CONTRACTS_DIR}{contract_name}.bin", 'r') as bin_file:
+        bytecode = bin_file.read() # Lendo Como String Hexadecimal.
+    return abi, bytecode
 
 # Criando uma Reserva "Pendente" na Blockchain:
 def createReservationBlockchain(w3: Web3, contract, server_account, vehicleID: int, data: dict):
+    # Recuperando os Arquivos Compilados:
+    abi, bytecode = getContractData("ReservationLedger")
+
+    # Implantando o Contrato:
+    Contract = w3.eth.contract(abi=abi, bytecode=bytecode)
     try:
         # Verificando os Dados:
         assert isinstance(data["startTimestamp"], int)
@@ -55,7 +62,7 @@ def createReservationBlockchain(w3: Web3, contract, server_account, vehicleID: i
         assert Web3.is_address(data["customerAddress"]), "Endereço inválido"
         # Enviando os Dados:
         print(f"Criando uma Reserva na Blockchain Para '{vehicleID}' em '{data["cityCodename"]}'\n")
-        tx_hash = contract.functions.createReservation(
+        tx_hash = Contract.functions.createReservation(
             data["chargingStationID"],
             data["chargingPointID"],
             data["cityCodename"],
