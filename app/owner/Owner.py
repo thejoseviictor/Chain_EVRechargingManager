@@ -39,7 +39,7 @@ contracts = {}
 # Configurando a Blockchain:
 def setupBlockchain():
     # Definindo as Variáveis Globais:
-    global w3, owner_account, ecocharge_account, eflux_account, voltpoint_account, contracts_addresses
+    global w3, owner_account, ecocharge_account, eflux_account, voltpoint_account, contracts
 
     # Conectando ao Ganache e Web3:
     while True:
