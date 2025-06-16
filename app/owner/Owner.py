@@ -34,7 +34,7 @@ owner_account = None
 ecocharge_account = None
 eflux_account = None
 voltpoint_account = None
-contracts_addresses = {}
+contracts = {}
 
 # Configurando a Blockchain:
 def setupBlockchain():
@@ -67,11 +67,11 @@ def setupBlockchain():
     csm_contract = deployContract(w3, owner_account, "ChargingSessionManager", as_contract.address, rl_contract.address, tl_contract.address, escrow_contract.address) # Sessão de Carregamento.
 
     # Salvando os Endereços dos Contratos em Um Dicionário Para Enviar aos Servidores das Empresas:
-    contracts_addresses = {
-        "ReservationLedger": rl_contract.address,
-        "TransactionLedger": tl_contract.address,
-        "Escrow": escrow_contract.address,
-        "ChargingSessionManager": csm_contract.address
+    contracts = {
+        "ReservationLedger": rl_contract,
+        "TransactionLedger": tl_contract,
+        "Escrow": escrow_contract,
+        "ChargingSessionManager": csm_contract
     }
 
     # Autorizando os Servidores das Empresas no Contrato "AuthorizedServers":
@@ -82,10 +82,10 @@ def setupBlockchain():
     # Armazenando o Contrato da Sessão de Carregamento Para Uso na Rota "/finish_cs":
     app.config["CSM_CONTRACT"] = csm_contract
 
-# Rota Para Enviar os Endereços dos Contratos Deployados:
+# Rota Para Enviar os Contratos Deployados:
 @app.route('/contracts', methods=['GET'])
 def getContractsAddresses():
-    return jsonify(contracts_addresses), 200
+    return jsonify(contracts), 200
 
 # Rota Para Finalizar uma Sessão de Carregamento e Liberar os Fundos do Pagamento ao Servidor Que Prestou o Serviço:
 @app.route('/finish_cs', methods=['POST'])
