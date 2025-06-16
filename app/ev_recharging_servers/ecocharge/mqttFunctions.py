@@ -124,10 +124,8 @@ def mqttCreateReservations(client, action: str, vehicleData: dict):
             print(f"Alguns Servidores Retornaram Erro nas Reservas Para o Veículo '{vehicleID}'.")
     # Tratando as Exceções, Se o Servidor Não Responder:
     except Exception as e:
-        response, status_code = handleHTTPExceptions(e)
-        errorMessage = response.json().get("error")
         client.publish(publisherTopic, str({"error": vehicleID}))
-        print(f"Erro no Agendamento das Reservas ({status_code}): {errorMessage}\n")
+        print(f"Erro no Agendamento das Reservas: {e}\n")
 
 # Função Para Inicializar Uma Sessão de Carregamento:
 def mqttStartCS(client, action: str, json: dict):
@@ -148,10 +146,8 @@ def mqttStartCS(client, action: str, json: dict):
                 print(f"Erro na Inicialização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
         # Tratando as Exceções, Se o Servidor Não Responder:
         except Exception as e:
-            response, status_code = handleHTTPExceptions(e)
-            errorMessage = response.json().get("error")
             client.publish(publisherTopic, str({"error": json["reservationID"]}))
-            print(f"Erro na Inicialização da Sessão de Carregamento ({status_code}): {errorMessage}\n")
+            print(f"Erro na Inicialização da Sessão de Carregamento: {e}\n")
 
 # Função Para Finalizar Uma Sessão de Carregamento:
 def mqttFinishCS(client, action: str, json: dict):
@@ -172,10 +168,8 @@ def mqttFinishCS(client, action: str, json: dict):
                 print(f"Erro na Finalização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
         # Tratando as Exceções, Se o Servidor Não Responder:
         except Exception as e:
-            response, status_code = handleHTTPExceptions(e)
-            errorMessage = response.json().get("error")
             client.publish(publisherTopic, str({"error": json["reservationID"]}))
-            print(f"Erro na Finalização da Sessão de Carregamento ({status_code}): {errorMessage}\n")
+            print(f"Erro na Finalização da Sessão de Carregamento: {e}\n")
 
 # Função "callback" ao Conectar-se ao Broker MQTT:
 def onConnect(client, userdata, flags, rc): # Assinatura Padrão da Função.
