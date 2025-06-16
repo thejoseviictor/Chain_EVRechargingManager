@@ -63,7 +63,7 @@ class ReservationsManager:
                 "chargingPointID": res[2],
                 "cityCodename": res[3],
                 "companyName": res[4],
-                "chargingPointPower": res[5],
+                "chargingPointPower": int(res[5]),
                 "kWhPrice": res[6],
                 "startTimestamp": datetime.datetime.fromtimestamp(res[7]).isoformat(),
                 "finishTimestamp": datetime.datetime.fromtimestamp(res[8]).isoformat(),
