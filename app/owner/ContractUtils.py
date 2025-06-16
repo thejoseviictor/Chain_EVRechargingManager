@@ -32,7 +32,7 @@ def deployContract(w3: Web3, deployer_account, contract_name: str, *args):
             "from": deployer_account,
             "nonce": w3.eth.get_transaction_count(deployer_account),
             "gasPrice": w3.eth.gas_price,
-            "gas": 3000000,
+            "gas": 3100000,
             "chainId": w3.eth.chain_id,
     })
     
@@ -61,7 +61,7 @@ def authorizeServer(w3: Web3, contract, deployer_account, server_account):
             'from': deployer_account,
             "nonce": w3.eth.get_transaction_count(deployer_account),
             'gasPrice': w3.eth.gas_price,
-            "gas": 3000000,
+            "gas": 4000,
             "chainId": w3.eth.chain_id
         })
         w3.eth.wait_for_transaction_receipt(tx_hash)
@@ -78,7 +78,7 @@ def finishChargingSession(w3: Web3, contract, deployer_account, reservationID: i
             'from': deployer_account,
             "nonce": w3.eth.get_transaction_count(deployer_account),
             'gasPrice': w3.eth.gas_price,
-            "gas": 3000000,
+            "gas": 65000,
             "chainId": w3.eth.chain_id
         })
         w3.eth.wait_for_transaction_receipt(tx_hash)
