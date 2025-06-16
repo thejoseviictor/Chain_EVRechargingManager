@@ -79,7 +79,7 @@ def createReservations():
         for city in reservationsRoute:
             if cs["city_codename"] == city["codename"]:
                 chargingStationID = cs["chargingStationID"] # Salvando o ID do Posto de Recarga.
-                chargingPointID = ReservationHelper.chooseChargingPoint(chargingStationID) # Procurando um Ponto de Carregamento no Posto de Recarga.
+                chargingPointID = ReservationHelper.chooseChargingPoint(chargingStationID, rl_contract) # Procurando um Ponto de Carregamento no Posto de Recarga.
                 # Verificando Se Um Ponto de Carregamento Foi Encontrado:
                 if not chargingPointID:
                     print("Erro: Não Existem Pontos de Carregamento Cadastrados Neste Servidor!\n")
