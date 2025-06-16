@@ -118,6 +118,21 @@ contract ReservationLedger {
         emit ReservationStatusUpdated(_reservationID, reservations[_reservationID].status);
     }
 
+    // Marcando uma Reserva Como Paga:
+    // A Função Será Usada Após a Gravação de Um Transação.
+    function markReservationAsPayed(uint256 _reservationID) public onlyServerOrOwner {
+        // Verificando o Estado da Reserva:
+        require(reservations[_reservationID].reservationID != 0, "ID da Reserva Invalido!");
+        require(reservations[_reservationID].status != Status.CANCELLED, "Nao e Possivel Marcar uma Reserva Cancelada Como Paga!");
+        require(reservations[_reservationID].status == Status.CONFIRMED, "Nao e Possivel Marcar uma Reserva Pendente de Confirmacao Como Paga");
+        
+        // Atualizando o Status da Reserva:
+        reservations[_reservationID].status = Status.PAYED;
+        
+        // Emitindo a Notificação:
+        emit ReservationStatusUpdated(_reservationID, reservations[_reservationID].status);
+    }
+
     // Cancelando uma Reserva Existente:
     function cancelReservation(uint256 _reservationID) public onlyServerOrOwner {
         // Verificando o Estado da Reserva:
