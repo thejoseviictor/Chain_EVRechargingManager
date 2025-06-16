@@ -2,7 +2,7 @@
 
 import datetime
 from ChargingPointsFile import ChargingPointsFile
-from ReservationsFile import ReservationsFile
+from ReservationsManager import ReservationsManager
 from RoutesFile import RoutesFile
 
 # Escolhendo os Postos de Recarga Onde o Veículo Deve Fazer Reservas:
@@ -82,7 +82,7 @@ def chooseChargingPoint(chargingStationID: int):
     # Calcular o Ponto de Carregamento Sem Reservas ou Com Reserva Que Acaba Mais Cedo:
     chargingPointsList = ChargingPointsFile() # Lendo Dados do Arquivo ".json".
     cp = chargingPointsList.listChargingPoints(chargingStationID) # Listando Todos os Pontos de Carregamento do Posto de Recarga.
-    reservationsList = ReservationsFile() # Lendo Dados do Arquivo ".json".
+    reservationsList = ReservationsManager() # Lendo Dados do Arquivo ".json".
     reservations = reservationsList.listReservations(chargingStationID) # Listando Todos as Reservas Para o Posto de Recarga.
     chargingPointID = None # Inicializando o ID do Ponto de Carregamento a Ser Escolhido.
     # Verificando Se Existem Pontos de Carregamento para o Posto de Recarga, Cadastrados no Banco de Dados:
