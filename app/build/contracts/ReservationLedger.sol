@@ -23,8 +23,8 @@ contract ReservationLedger {
         string companyName;
         uint256 chargingPointPower; // Potência do Carregador em kW.
         uint256 kWhPrice; // Em "wei", Menor Unidade de Valor do Ethereum.
-        uint256 startDateTime; // Converter ISO para "timestamp".
-        uint256 finishDateTime;
+        uint256 startTimestamp;
+        uint256 finishTimestamp;
         uint256 price; // Preço em "wei".
         address payable customer; // Endereço da Carteira do Cliente, Para Pagamentos.
         Status status;
@@ -87,8 +87,8 @@ contract ReservationLedger {
         string memory _companyName,
         uint256 _chargingPointPower,
         uint256 _kWhPrice,
-        uint256 _startDateTime,
-        uint256 _finishDateTime,
+        uint256 _startTimestamp,
+        uint256 _finishTimestamp,
         uint256 _price,
         address _customerAddress // Endereço da Carteira do Cliente.
     ) public onlyServerOrOwner returns (uint256) {
@@ -102,8 +102,8 @@ contract ReservationLedger {
             companyName: _companyName,
             chargingPointPower: _chargingPointPower,
             kWhPrice: _kWhPrice,
-            startDateTime: _startDateTime,
-            finishDateTime: _finishDateTime,
+            startTimestamp: _startTimestamp,
+            finishTimestamp: _finishTimestamp,
             price: _price,
             customer: payable(_customerAddress),
             status: Status.PENDING
@@ -147,7 +147,7 @@ contract ReservationLedger {
         require(reservations[_reservationID].reservationID != 0, "ID da Reserva Invalido!");
         require(reservations[_reservationID].status != Status.CANCELLED, "Nao e Possivel Cancelar uma Reserva Ja Cancelada!");
         require(reservations[_reservationID].status != Status.PAYED, "Nao e Possivel Cancelar uma Reserva Paga!");
-        require(block.timestamp < reservations[_reservationID].startDateTime, "Nao e Possivel Cancelar uma Reserva Ja Iniciada!");
+        require(block.timestamp < reservations[_reservationID].startTimestamp, "Nao e Possivel Cancelar uma Reserva Ja Iniciada!");
 
         // Atualizando o Status da Reserva:
         reservations[_reservationID].status = Status.CANCELLED;
