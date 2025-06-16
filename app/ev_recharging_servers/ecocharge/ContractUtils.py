@@ -50,6 +50,12 @@ def getContractData(contract_name: str):
 # Criando uma Reserva "Pendente" na Blockchain:
 def createReservationBlockchain(w3: Web3, contract, server_account, vehicleID: int, data: dict):
     try:
+        # Verificando os Dados:
+        assert isinstance(data["startTimestamp"], int)
+        assert isinstance(data["finishTimestamp"], int)
+        assert isinstance(data["chargingPointPower"], int)
+        assert Web3.is_address(data["customerAddress"]), "Endereço inválido"
+        # Enviando os Dados:
         print(f"Criando uma Reserva na Blockchain Para '{vehicleID}' em '{data["cityCodename"]}'\n")
         tx_hash = contract.functions.createReservation(
             data["chargingStationID"],
