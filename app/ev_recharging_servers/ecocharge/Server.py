@@ -46,9 +46,9 @@ company_accounts = {
 contracts_addresses = getContractsAddresses()
 
 # Objetos dos Contratos:
-rl_contract = Web3.eth.contract(address=contracts_addresses["ReservationLedger"], abi=getContractData("ReservationLedger")) # Reservas.
-escrow_contract = Web3.eth.contract(address=contracts_addresses["Escrow"], abi=getContractData("Escrow")) # Escrow de Pagamento.
-csm_contract = Web3.eth.contract(address=contracts_addresses["ChargingSessionManager"], abi=getContractData("ChargingSessionManager")) # Sessão de Carregamento.
+rl_contract = w3.eth.contract(address=contracts_addresses["ReservationLedger"], abi=getContractData("ReservationLedger")) # Reservas.
+escrow_contract = w3.eth.contract(address=contracts_addresses["Escrow"], abi=getContractData("Escrow")) # Escrow de Pagamento.
+csm_contract = w3.eth.contract(address=contracts_addresses["ChargingSessionManager"], abi=getContractData("ChargingSessionManager")) # Sessão de Carregamento.
 
 # Criando o Objeto de Manipulação das Reservas:
 reservationsManager = ReservationsManager(rl_contract)
