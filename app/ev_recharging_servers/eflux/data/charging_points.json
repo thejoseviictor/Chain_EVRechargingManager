@@ -1,0 +1,30 @@
+[
+    {
+        "chargingPointID": 1,
+        "chargingStationID": 1,
+        "power": 7,
+        "kWhPrice": 0.8,
+        "availability": "livre"
+    },
+    {
+        "chargingPointID": 2,
+        "chargingStationID": 1,
+        "power": 22,
+        "kWhPrice": 1.5,
+        "availability": "livre"
+    },
+    {
+        "chargingPointID": 3,
+        "chargingStationID": 1,
+        "power": 50,
+        "kWhPrice": 2,
+        "availability": "livre"
+    },
+    {
+        "chargingPointID": 4,
+        "chargingStationID": 1,
+        "power": 150,
+        "kWhPrice": 2.5,
+        "availability": "livre"
+    }
+]

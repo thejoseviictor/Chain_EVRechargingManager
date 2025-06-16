@@ -1,0 +1,120 @@
+[
+    {
+        "routeID": 1,
+        "cities": [
+            {
+                "codename": "v_conquista",
+                "name": "Vitória da Conquista - BA",
+                "location": 0,
+                "company": "voltpoint"
+            },
+            {
+                "codename": "jequie",
+                "name": "Jequié - BA",
+                "location": 154,
+                "company": "voltpoint"
+            },
+            {
+                "codename": "feira",
+                "name": "Feira de Santana - BA",
+                "location": 406,
+                "company": "voltpoint"
+            },
+            {
+                "codename": "e_cunha",
+                "name": "Euclides da Cunha - BA",
+                "location": 615,
+                "company": "voltpoint"
+            },
+            {
+                "codename": "ibo",
+                "name": "Ibó - PE",
+                "location": 837,
+                "company": "eflux"
+            },
+            {
+                "codename": "barro",
+                "name": "Barro - CE",
+                "location": 1022,
+                "company": "ecocharge"
+            },
+            {
+                "codename": "jaguaribe",
+                "name": "Jaguaribe - CE",
+                "location": 1183,
+                "company": "ecocharge"
+            },
+            {
+                "codename": "russas",
+                "name": "Russas - CE",
+                "location": 1330,
+                "company": "ecocharge"
+            },
+            {
+                "codename": "fortaleza",
+                "name": "Fortaleza - CE",
+                "location": 1497,
+                "company": "ecocharge"
+            }
+        ]
+    },
+    {
+        "routeID": 2,
+        "cities": [
+            {
+                "codename": "fortaleza",
+                "name": "Fortaleza - CE",
+                "location": 0,
+                "company": "ecocharge"
+            },
+            {
+                "codename": "russas",
+                "name": "Russas - CE",
+                "location": 154,
+                "company": "ecocharge"
+            },
+            {
+                "codename": "jaguaribe",
+                "name": "Jaguaribe - CE",
+                "location": 406,
+                "company": "ecocharge"
+            },
+            {
+                "codename": "barro",
+                "name": "Barro - CE",
+                "location": 615,
+                "company": "ecocharge"
+            },
+            {
+                "codename": "ibo",
+                "name": "Ibó - PE",
+                "location": 837,
+                "company": "eflux"
+            },
+            {
+                "codename": "e_cunha",
+                "name": "Euclides da Cunha - BA",
+                "location": 1022,
+                "company": "voltpoint"
+            },
+            {
+                "codename": "feira",
+                "name": "Feira de Santana - BA",
+                "location": 1183,
+                "company": "voltpoint"
+            },
+            {
+                "codename": "jequie",
+                "name": "Jequié - BA",
+                "location": 1330,
+                "company": "voltpoint"
+            },
+            {
+                "codename": "v_conquista",
+                "name": "Vitória da Conquista - BA",
+                "location": 1497,
+                "company": "voltpoint"
+            }
+        ]
+    }
+]
