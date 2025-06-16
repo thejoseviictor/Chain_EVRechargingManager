@@ -10,10 +10,6 @@ from requests.exceptions import RequestException, ConnectionError, Timeout, HTTP
 import urllib3 # Exceções Para Problemas de Conexão.
 import time
 
-# Salvando as Informações do Owner:
-OWNER_IP = os.environ.get(f'OWNER_IP')
-OWNER_PORT = int(os.environ.get(f'OWNER_PORT'))
-
 # Tratando as Exceções do HTTP:
 def handleHTTPExceptions(exception):
     if isinstance (exception, urllib3.exceptions.NewConnectionError):
@@ -48,27 +44,3 @@ def sendReservationsToOtherServers(data: json, reservationsRoute: list):
     # Tratando as Exceções:
     except Exception as e:
         return handleHTTPExceptions(e)
-
-# Conectando ao Ganache e Web3:
-def connectGanacheWeb3(GANACHE_URL: str):
-    while True:
-        try:
-            w3 = Web3(Web3.HTTPProvider(GANACHE_URL))
-            if not w3.is_connected():
-                raise Exception("Não foi Possível Conectar-se Ao Ganache!\n")
-            print("Conectado ao Ganache!")
-            return w3
-        except Exception as e:
-            print(f"Erro de Conexão ao Ganache: {e}\n")
-            time.sleep(3) # Tempo de Espera Para Tentar uma Nova Conexão.
-
-# Recebendo os Endereços dos Contratos:
-def getContractsAddresses():
-    try:
-        response = requests.get(f'http://{OWNER_IP}:{OWNER_PORT}/contracts')
-        print(f"Endereços dos Contratos Recebidos Com Sucesso!\n")
-        return response.json()
-    # Tratando as Exceções:
-    except Exception as e:
-        print(f"Erro ao Receber os Endereços dos Contratos: {e}\n")
-        return None
