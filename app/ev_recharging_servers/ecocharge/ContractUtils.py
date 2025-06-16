@@ -4,12 +4,42 @@
 import os
 from web3 import Web3
 import json
+import time
+import requests
+
+# Salvando as Informações do Owner:
+OWNER_IP = os.environ.get(f'OWNER_IP')
+OWNER_PORT = int(os.environ.get(f'OWNER_PORT'))
 
 # Caminho dos Contratos:
 CONTRACTS_DIR = 'build/contracts/'
 
 # Chave Privada do Deployer:
 DEPLOYER_PRIVATE_KEY = os.environ.get('DEPLOYER_PRIVATE_KEY')
+
+# Conectando ao Ganache e Web3:
+def connectGanacheWeb3(GANACHE_URL: str):
+    while True:
+        try:
+            w3 = Web3(Web3.HTTPProvider(GANACHE_URL))
+            if not w3.is_connected():
+                raise Exception("Não foi Possível Conectar-se Ao Ganache!\n")
+            print("Conectado ao Ganache!")
+            return w3
+        except Exception as e:
+            print(f"Erro de Conexão ao Ganache: {e}\n")
+            time.sleep(3) # Tempo de Espera Para Tentar uma Nova Conexão.
+
+# Recebendo os Endereços dos Contratos:
+def getContractsAddresses():
+    try:
+        response = requests.get(f'http://{OWNER_IP}:{OWNER_PORT}/contracts')
+        print(f"Endereços dos Contratos Recebidos Com Sucesso!\n")
+        return response.json()
+    # Tratando as Exceções:
+    except Exception as e:
+        print(f"Erro ao Receber os Endereços dos Contratos: {e}\n")
+        return None
 
 # Carregando o "ABI" de Um Contrato Compilado:
 def getContractData(contract_name: str):
