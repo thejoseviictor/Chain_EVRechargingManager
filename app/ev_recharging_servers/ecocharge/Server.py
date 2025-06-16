@@ -3,13 +3,12 @@
 # Importando as Dependências:
 import os # Para Usar Variáveis de Ambiente.
 from flask import Flask, request, jsonify # Para Criar a API do Servidor e Seus End-Points.
-from web3 import Web3 # Para Comunicação com a Blockchain Ganache.
 import threading # Para Criar Múltiplas Instâncias.
 from ReservationsManager import ReservationsManager # Que Manipula a Persistência de Dados das Reservas.
 from ChargingStationsFile import ChargingStationsFile # Que Manipula a Persistência de Dados dos Postos de Recarga.
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
 import mqttFunctions # Função para Configurar e Inicializar o MQTT.
-from ContractUtils import connectGanacheWeb3, getContractsAddresses, getContractData
+from ContractUtils import connectGanacheWeb3, getContracts
 from ContractUtils import createReservationBlockchain, startChargingSession, markReservationAsPayed
 from ContractUtils import markReservationsAsConfirmed, markReservationsAsCanceled
 
@@ -43,15 +42,12 @@ company_accounts = {
 }
 
 # Recebendo os Endereços dos Contratos pelo "Owner":
-contracts_addresses = getContractsAddresses()
+contracts = getContracts()
 
-# Formatando os Endereços Para Objetos de Contrato:
-abi, bytecode = getContractData("ReservationLedger")
-rl_contract = w3.eth.contract(address=contracts_addresses["ReservationLedger"], abi=abi)
-abi, bytecode = getContractData("Escrow")
-escrow_contract = w3.eth.contract(address=contracts_addresses["Escrow"], abi=abi)
-abi, bytecode = getContractData("ChargingSessionManager")
-csm_contract = w3.eth.contract(address=contracts_addresses["ChargingSessionManager"], abi=abi)
+# Separando os Objetos dos Contratos:
+rl_contract = contracts["ReservationLedger"]
+escrow_contract = contracts["Escrow"]
+csm_contract = contracts["ChargingSessionManager"]
 
 # Criando o Objeto de Manipulação das Reservas:
 reservationsManager = ReservationsManager(rl_contract)
