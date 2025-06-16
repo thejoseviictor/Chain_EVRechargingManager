@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  vehicle:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: vehicle_client
+    environment:
+      - PYTHONUNBUFFERED=1
+    network_mode: host
+    restart: on-failure
