@@ -108,7 +108,7 @@ def createReservations():
 
 # Rota Para Marcar as Reservas do Cliente Como Confirmadas e Fazer Escrow:
 @app.route('/confirm_res', methods=['POST'])
-def startCS():
+def confirmReservations():
     # Tratando os Dados Recebidos:
     # Esperado: data = {"vehicleID": int, "customerAddress": hex}
     data = request.json # Recebendo os Dados em um Dicionário.
@@ -122,8 +122,8 @@ def startCS():
         return jsonify({"error": "Erro Genérico!"}), 500
 
 # Rota Para Marcar as Reservas do Cliente Como Canceladas:
-@app.route('/confirm_res', methods=['POST'])
-def startCS():
+@app.route('/cancel_res', methods=['POST'])
+def cancelReservations():
     # Tratando os Dados Recebidos:
     # Esperado: data = {"vehicleID": int, "customerAddress": hex}
     data = request.json # Recebendo os Dados em um Dicionário.
