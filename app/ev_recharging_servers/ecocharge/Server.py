@@ -115,7 +115,7 @@ def confirmReservations():
     vehicleID = data.get('vehicleID')
     customerAddress = data.get('customerAddress')
     # Solicitando as Confirmações e Escrows das Reservas na Blockchain:
-    confirmed = markReservationsAsConfirmed(w3, rl_contract, escrow_contract, company_accounts[f"{companyName.lower()}"], customerAddress)
+    confirmed = markReservationsAsConfirmed(w3, rl_contract, escrow_contract, company_accounts[f"{companyName.lower()}"], customerAddress, company_accounts)
     if confirmed:
         return f"Sucesso ao Confirmar as Reservas do Veículo '{vehicleID}'", 200
     else:
