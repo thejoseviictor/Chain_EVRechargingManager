@@ -1,6 +1,10 @@
 import paho.mqtt.client as mqtt
 import json
+from web3 import Web3
+import time
+import os
 
+GANACHE_URL = os.environ.get('GANACHE_URL')
 BROKER_IP = "localhost"
 BROKER_PORT = 1883
 MQTT_TOPICS_PUBLISHER = {
@@ -16,8 +20,45 @@ MQTT_TOPICS_SUBSCRIBER = {
     "server/end_charging_session/vehicle"
 }
 
+while True:
+    try:
+        w3 = Web3(Web3.HTTPProvider(GANACHE_URL))
+        if not w3.is_connected():
+            raise Exception("Não foi Possível Conectar-se Ao Ganache!\n")
+        print("Conectado ao Ganache!")
+        break
+    except Exception as e:
+        print(f"Erro de Conexão ao Ganache: {e}\n")
+        time.sleep(3) # Tempo de Espera Para Tentar uma Nova Conexão.
+
 def mqttReceiveContractsAddresses(client):
     client.publish("vehicle/contracts_addresses/server", "OK")
+
+def mqttScheduleReservations(client):
+    data = {
+        "vehicleID": 1,
+        "actualBatteryPercentage": 100,
+        "batteryCapacity": 51,
+        "departureCityCodename": "v_conquista",
+        "arrivalCityCodename": "e_cunha",
+        "accountNumber": 1
+    }
+    client.publish("vehicle/create_reservations/server", json.dumps(data))
+
+def depositFunds():
+    pass
+
+def mqttStartCS(client):
+    data = {
+        "reservationID": 1,
+    }
+    client.publish("vehicle/start_charging_session/server", json.dumps(data))
+
+def mqttFinishCS(client):
+    data = {
+        "reservationID": 1,
+    }
+    client.publish("vehicle/end_charging_session/server", json.dumps(data))
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -25,6 +66,10 @@ def on_connect(client, userdata, flags, rc):
         for topic in MQTT_TOPICS_SUBSCRIBER:
             client.subscribe(topic)
         mqttReceiveContractsAddresses(client)
+        mqttScheduleReservations(client)
+        depositFunds()
+        mqttStartCS(client)
+        mqttFinishCS(client)
     else:
         print(f"Falha na Conexão! Código de Retorno: {rc}\n")
 
