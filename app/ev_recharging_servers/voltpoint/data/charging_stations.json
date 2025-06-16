@@ -1,0 +1,22 @@
+[
+    {
+        "chargingStationID": 1,
+        "city_codename": "v_conquista",
+        "city_name": "Vitória da Conquista - BA"
+    },
+    {
+        "chargingStationID": 2,
+        "city_codename": "jequie",
+        "city_name": "Jequié - BA"
+    },
+    {
+        "chargingStationID": 3,
+        "city_codename": "feira",
+        "city_name": "Feira de Santana - BA"
+    },
+    {
+        "chargingStationID": 4,
+        "city_codename": "e_cunha",
+        "city_name": "Euclides da Cunha - BA"
+    }
+]
