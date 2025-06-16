@@ -46,9 +46,12 @@ company_accounts = {
 contracts_addresses = getContractsAddresses()
 
 # Formatando os Endereços Para Objetos de Contrato:
-rl_contract = w3.eth.contract(address=contracts_addresses["ReservationLedger"], abi=getContractData("ReservationLedger"))
-escrow_contract = w3.eth.contract(address=contracts_addresses["Escrow"], abi=getContractData("Escrow"))
-csm_contract = w3.eth.contract(address=contracts_addresses["ChargingSessionManager"], abi=getContractData("ChargingSessionManager"))
+abi, bytecode = getContractData("ReservationLedger")
+rl_contract = w3.eth.contract(address=contracts_addresses["ReservationLedger"], abi=abi)
+abi, bytecode = getContractData("Escrow")
+escrow_contract = w3.eth.contract(address=contracts_addresses["Escrow"], abi=abi)
+abi, bytecode = getContractData("ChargingSessionManager")
+csm_contract = w3.eth.contract(address=contracts_addresses["ChargingSessionManager"], abi=abi)
 
 # Criando o Objeto de Manipulação das Reservas:
 reservationsManager = ReservationsManager(rl_contract)
