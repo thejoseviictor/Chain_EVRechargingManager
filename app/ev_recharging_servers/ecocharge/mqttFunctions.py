@@ -6,7 +6,6 @@ import json # Para Printar os Erros.
 import requests # Para Comunicação com Outros Servidores.
 import paho.mqtt.client as mqtt # Funções do MQTT.
 from Server import SERVER_IP, SERVER_PORT, contracts_addresses
-from Utils import handleHTTPExceptions # Exceções Para Problemas de Conexão.
 from ContractUtils import OWNER_IP, OWNER_PORT
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
 
