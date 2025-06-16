@@ -70,7 +70,7 @@ def createReservationBlockchain(w3: Web3, contract, server_account, vehicleID: i
             'from': server_account,
             "nonce": w3.eth.get_transaction_count(server_account),
             'gasPrice': w3.eth.gas_price,
-            "gas": 3000000,
+            "gas": 400000,
             "chainId": w3.eth.chain_id
         })
         w3.eth.wait_for_transaction_receipt(tx_hash)
@@ -86,7 +86,7 @@ def startChargingSession(w3: Web3, contract, server_account, reservationID: int)
             'from': server_account,
             "nonce": w3.eth.get_transaction_count(server_account),
             'gasPrice': w3.eth.gas_price,
-            "gas": 3000000,
+            "gas": 65000,
             "chainId": w3.eth.chain_id
         })
         w3.eth.wait_for_transaction_receipt(tx_hash)
@@ -119,7 +119,7 @@ def markReservationsAsConfirmed(w3: Web3, rl_contract, escrow_contract, server_a
                     'from': server_account,
                     "nonce": w3.eth.get_transaction_count(server_account),
                     'gasPrice': w3.eth.gas_price,
-                    "gas": 3000000,
+                    "gas": 52000,
                     "chainId": w3.eth.chain_id
                 })
                 w3.eth.wait_for_transaction_receipt(tx_hash)
@@ -145,7 +145,7 @@ def markReservationsAsConfirmed(w3: Web3, rl_contract, escrow_contract, server_a
                     'from': server_account,
                     "nonce": w3.eth.get_transaction_count(server_account),
                     'gasPrice': w3.eth.gas_price,
-                    "gas": 3000000,
+                    "gas": 200000,
                     "chainId": w3.eth.chain_id
                 })
                 w3.eth.wait_for_transaction_receipt(tx_hash)
@@ -168,7 +168,7 @@ def markReservationsAsCanceled(w3: Web3, rl_contract, server_account, customerAd
                     'from': server_account,
                     "nonce": w3.eth.get_transaction_count(server_account),
                     'gasPrice': w3.eth.gas_price,
-                    "gas": 3000000,
+                    "gas": 52000,
                     "chainId": w3.eth.chain_id
                 })
                 w3.eth.wait_for_transaction_receipt(tx_hash)
@@ -187,7 +187,7 @@ def markReservationAsPayed(w3: Web3, contract, server_account, reservationID: in
             'from': server_account,
             "nonce": w3.eth.get_transaction_count(server_account),
             'gasPrice': w3.eth.gas_price,
-            "gas": 3000000,
+            "gas": 52000,
             "chainId": w3.eth.chain_id
         })
         w3.eth.wait_for_transaction_receipt(tx_hash)
