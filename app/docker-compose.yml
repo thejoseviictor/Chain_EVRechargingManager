@@ -62,3 +62,37 @@ services:
       - ./build:/app/build
     network_mode: host
     restart: always
+
+  # Serviço da API do Servidor "E-Flux":
+  eflux:
+    build:
+      context: ./ev_recharging_servers/eflux
+      dockerfile: Dockerfile
+    container_name: eflux_server
+    depends_on:
+      - ganache
+      - owner
+      - mosquitto
+    env_file:
+      - ./ev_recharging_servers/eflux/.env
+    volumes:
+      - ./build:/app/build
+    network_mode: host
+    restart: always
+
+  # Serviço da API do Servidor "VoltPoint":
+  voltpoint:
+    build:
+      context: ./ev_recharging_servers/voltpoint
+      dockerfile: Dockerfile
+    container_name: voltpoint_server
+    depends_on:
+      - ganache
+      - owner
+      - mosquitto
+    env_file:
+      - ./ev_recharging_servers/voltpoint/.env
+    volumes:
+      - ./build:/app/build
+    network_mode: host
+    restart: always
