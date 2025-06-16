@@ -45,9 +45,9 @@ company_accounts = {
 contracts = getContracts()
 
 # Separando os Objetos dos Contratos:
-rl_contract = contracts.get("ReservationLedger")
-escrow_contract = contracts.get("Escrow")
-csm_contract = contracts.get("ChargingSessionManager")
+rl_contract = contracts["ReservationLedger"]
+escrow_contract = contracts["Escrow"]
+csm_contract = contracts["ChargingSessionManager"]
 
 # Criando o Objeto de Manipulação das Reservas:
 reservationsManager = ReservationsManager(rl_contract)
