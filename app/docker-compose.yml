@@ -37,6 +37,17 @@ services:
     volumes:
       - ./build:/app/build # Permite Acessar os ABIs e Bytecodes Compilados.
     network_mode: host
+  
+  # Serviço do Broker MQTT, Mosquitto:
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mosquitto_broker
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
 
   # Serviço da API do Servidor "EcoCharge":
   ecocharge:
@@ -47,6 +58,7 @@ services:
     depends_on:
       - ganache
       - owner
+      - mosquitto
     env_file:
       - ./ev_recharging_servers/ecocharge/.env
     volumes:
