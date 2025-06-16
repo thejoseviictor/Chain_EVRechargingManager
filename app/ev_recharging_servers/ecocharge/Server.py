@@ -5,8 +5,6 @@ import os # Para Usar Variáveis de Ambiente.
 from flask import Flask, request, jsonify # Para Criar a API do Servidor e Seus End-Points.
 from web3 import Web3 # Para Comunicação com a Blockchain Ganache.
 import threading # Para Criar Múltiplas Instâncias.
-import paho.mqtt.client as mqtt # Funções do MQTT.
-import asyncio # Para Concorrência.
 from ReservationsManager import ReservationsManager # Que Manipula a Persistência de Dados das Reservas.
 from ChargingStationsFile import ChargingStationsFile # Que Manipula a Persistência de Dados dos Postos de Recarga.
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
@@ -124,14 +122,10 @@ def startCS():
 
 # Rodando o Servidor no IP da Máquina:
 if __name__ == '__main__':
-    mqttFunctions.startMQTT()
-    try:
-        asyncio.get_event_loop().run_forever()
-    except KeyboardInterrupt:
-        print("Cliente MQTT Interrompido Pelo Teclado!\n")
-    finally:
-        client = mqtt.Client()
-        client.loop_stop()
-        client.disconnect()
+    # Iniciando o MQTT em Outra Thread:
+    mqtt_thread = threading.Thread(target=mqttFunctions.startMQTT) # Configurando a Thread do MQTT.
+    mqtt_thread.daemon = True # Thread "Daemon" Que Se Encerrará Junto Com o Servidor.
+    mqtt_thread.start() # Iniciando a Thread do MQTT.
+
     # Iniciando o Servidor HTTP (Flask):
     app.run(host=SERVER_IP, port=SERVER_PORT, debug=True, use_reloader=False)
