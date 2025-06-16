@@ -6,6 +6,8 @@ from web3 import Web3
 import json
 import time
 import requests
+from ReservationsManager import ReservationsManager
+from Server import rl_contract, company_accounts
 
 # Salvando as Informações do Owner:
 OWNER_IP = os.environ.get(f'OWNER_IP')
@@ -13,6 +15,9 @@ OWNER_PORT = int(os.environ.get(f'OWNER_PORT'))
 
 # Caminho dos Contratos:
 CONTRACTS_DIR = 'build/contracts/'
+
+# Criando o Objeto de Manipulação das Reservas:
+reservationsManager = ReservationsManager(rl_contract)
 
 # Conectando ao Ganache e Web3:
 def connectGanacheWeb3(GANACHE_URL: str):
@@ -100,6 +105,79 @@ def startChargingSession(w3: Web3, contract, server_account, reservationID: int)
     except Exception as e:
         print(f"Erro ao Iniciar a Sessão de Carregamento da Reserva '{reservationID}': {e}\n")
         return None
+
+
+# Marcando Todas as Reservas Pendentes de Um Usuário Como Confirmadas e Criando o Escrow:
+def markReservationsAsConfirmed(w3: Web3, rl_contract, escrow_contract, server_account, customerAddress):
+    reservationsManager.getReservationsOnBlockchain(rl_contract)
+    res_list = reservationsManager.reservationsList
+    # Percorrendo as Reservas:
+    for res in res_list:
+        if int(res["customer"]) == int(customerAddress):
+            try:
+                # Marcando a Reserva Como Confirmada:
+                print(f"Marcando Uma Reserva Como Confirmada: {int(res['reservationID'])}\n")
+                tx_hash = rl_contract.functions.confirmReservation(int(res["reservationID"])).transact({
+                    'from': server_account,
+                    "nonce": w3.eth.get_transaction_count(server_account),
+                    'gasPrice': w3.eth.gas_price,
+                    "gas": 3000000,
+                    "chainId": w3.eth.chain_id
+                })
+                w3.eth.wait_for_transaction_receipt(tx_hash)
+                rs = rl_contract.functions.getReservation(int(res["reservationID"])).call()
+                rs_status = rs[11] # 0 = PENDING, 1 = CONFIRMED, 2 = PAYED, 3 = CANCELLED.
+                if rs_status != 1:
+                    print(f"Falha ao Marcar a Reserva '{int(res['reservationID'])}' Como Confirmada!\n")
+
+                # Criando o Escrow da Reserva:
+                if res["companyName"] == "ecocharge":
+                    recipient = company_accounts["ecocharge"]
+                elif res["companyName"] == "eflux":
+                    recipient = company_accounts["eflux"]
+                elif res["companyName"] == "voltpoint":
+                    recipient = company_accounts["voltpoint"]
+                print(f"Criando o Escrow da Reserva: {int(res['reservationID'])}\n")
+                tx_hash = escrow_contract.functions.initializeEscrow(
+                    int(res["reservationID"]),
+                    customerAddress,
+                    recipient,
+                    int(res["price"])
+                ).transact({
+                    'from': server_account,
+                    "nonce": w3.eth.get_transaction_count(server_account),
+                    'gasPrice': w3.eth.gas_price,
+                    "gas": 3000000,
+                    "chainId": w3.eth.chain_id
+                })
+                w3.eth.wait_for_transaction_receipt(tx_hash)
+            except Exception as e:
+                print(f"Erro ao Marcar a Reserva '{int(res['reservationID'])}' Como Confirmada: {e}\n")
+
+# Marcando Todas as Reservas de Um Cliente Como Canceladas:
+def markReservationsAsCanceled(w3: Web3, rl_contract, server_account, customerAddress):
+    reservationsManager.getReservationsOnBlockchain(rl_contract)
+    res_list = reservationsManager.reservationsList
+    # Percorrendo as Reservas:
+    for res in res_list:
+        if int(res["customer"]) == int(customerAddress):
+            try:
+                # Marcando a Reserva Como Cancelada:
+                print(f"Marcando Uma Reserva Como Cancelada: {int(res['reservationID'])}\n")
+                tx_hash = rl_contract.functions.cancelReservation(int(res["reservationID"])).transact({
+                    'from': server_account,
+                    "nonce": w3.eth.get_transaction_count(server_account),
+                    'gasPrice': w3.eth.gas_price,
+                    "gas": 3000000,
+                    "chainId": w3.eth.chain_id
+                })
+                w3.eth.wait_for_transaction_receipt(tx_hash)
+                rs = rl_contract.functions.getReservation(int(res["reservationID"])).call()
+                rs_status = rs[11] # 0 = PENDING, 1 = CONFIRMED, 2 = PAYED, 3 = CANCELLED.
+                if rs_status != 3:
+                    print(f"Falha ao Marcar a Reserva '{int(res['reservationID'])}' Como Cancelada!\n")
+            except Exception as e:
+                print(f"Erro ao Marcar a Reserva '{int(res['reservationID'])}' Como Cancelada: {e}\n")
 
 # Marcando Uma Reserva Como Paga, Após Uma Transação:
 def markReservationAsPayed(w3: Web3, contract, server_account, reservationID: int):
