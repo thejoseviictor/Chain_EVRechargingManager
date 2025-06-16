@@ -9,8 +9,8 @@ from ReservationsManager import ReservationsManager # Que Manipula a Persistênc
 from ChargingStationsFile import ChargingStationsFile # Que Manipula a Persistência de Dados dos Postos de Recarga.
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
 import mqttFunctions # Função para Configurar e Inicializar o MQTT.
-from Utils import sendReservationsToOtherServers, connectGanacheWeb3, getContractsAddresses
-from ContractUtils import getContractData, startChargingSession
+from Utils import sendReservationsToOtherServers
+from ContractUtils import connectGanacheWeb3, getContractsAddresses, getContractData, startChargingSession
 
 # Criando a Aplicação Flask:
 app = Flask(__name__) # "__name__" se tornará "__main__" ao executar.
