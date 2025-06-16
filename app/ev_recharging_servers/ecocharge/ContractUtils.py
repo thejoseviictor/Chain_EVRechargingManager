@@ -4,12 +4,22 @@
 import os
 from web3 import Web3
 import time
+import json
 import requests
 from ReservationsManager import ReservationsManager
+
+# Caminho dos Contratos:
+CONTRACTS_DIR = 'build/contracts/'
 
 # Salvando as Informações do Owner:
 OWNER_IP = os.environ.get(f'OWNER_IP')
 OWNER_PORT = int(os.environ.get(f'OWNER_PORT'))
+
+# Carregando o "ABI" de Um Contrato Compilado:
+def getContractData(contract_name: str):
+    with open(f"{CONTRACTS_DIR}{contract_name}.abi", 'r') as abi_file:
+        abi = json.loads(abi_file.read()) # Lendo Como Dicionário.
+    return abi
 
 # Conectando ao Ganache e Web3:
 def connectGanacheWeb3(GANACHE_URL: str):
@@ -24,8 +34,8 @@ def connectGanacheWeb3(GANACHE_URL: str):
             print(f"Erro de Conexão ao Ganache: {e}\n")
             time.sleep(3) # Tempo de Espera Para Tentar uma Nova Conexão.
 
-# Recebendo os Contratos Compilados:
-def getContracts():
+# Recebendo os Endereços dos Contratos Compilados:
+def getContractsAddresses():
     try:
         response = requests.get(f'http://{OWNER_IP}:{OWNER_PORT}/contracts')
         print(f"Contratos Compilados Recebidos Com Sucesso!\n")
