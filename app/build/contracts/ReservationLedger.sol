@@ -91,7 +91,7 @@ contract ReservationLedger {
         uint256 _finishTimestamp,
         uint256 _price,
         address _customerAddress // Endereço da Carteira do Cliente.
-    ) public onlyServerOrOwner returns (uint256) {
+    ) public onlyServerOrOwner {
         // Criando a Reserva:
         uint256 newReservationID = nextReservationID;
         reservations[newReservationID] = Reservation({
@@ -122,9 +122,6 @@ contract ReservationLedger {
             _cityCodename,
             _price
         );
-
-        // Retornando o ID da Reserva:
-        return newReservationID;
     }
 
     // Confirmando uma Reserva:
