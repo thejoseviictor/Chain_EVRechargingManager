@@ -5,8 +5,11 @@ import os # Para Usar Variáveis de Ambiente.
 import json # Para Printar os Erros.
 import requests # Para Comunicação com Outros Servidores.
 import paho.mqtt.client as mqtt # Funções do MQTT.
+import asyncio
+import aiohttp
 from Server import SERVER_IP, SERVER_PORT, contracts_addresses
-from Utils import handleHTTPExceptions, OWNER_IP, OWNER_PORT # Exceções Para Problemas de Conexão.
+from Utils import handleHTTPExceptions # Exceções Para Problemas de Conexão.
+from ContractUtils import OWNER_IP, OWNER_PORT
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
 
 # Salvando as Informações do MQTT:
@@ -26,6 +29,20 @@ MQTT_TOPICS_PUBLISHER = {
     "server/start_charging_session/vehicle",
     "server/end_charging_session/vehicle"
 }
+
+# Enviando um Post Para Solicitar Agendamento de Reservas:
+async def sendReservationsRequest(url, vehicleID: int, batteryCapacity: float, accountNumber: int, reservationsRoute: list):
+    async with aiohttp.ClientSession() as session:
+        # Formatando a Mensagem do Post para API:
+        data = {
+            "vehicleID": vehicleID,
+            "batteryCapacity": batteryCapacity,
+            "accountNumber": accountNumber,
+            "reservationsRoute": reservationsRoute
+        }
+        async with session.post(url, json=data, timeout=10) as response:
+            response.raise_for_status()
+            return await response.json()
 
 # Verificando a Existência de Json:
 def isJson(text):
@@ -52,67 +69,101 @@ def mqttSendContractsAddresses(client, action: str):
         print("Endereços dos Contratos Ganache Enviados Atráves do MQTT\n")
 
 # Função para Criar Reservas, Recebida por um Tópico do MQTT:
-def mqttCreateReservations(client, action: str, vehicleData: dict):
-    publisherTopic = findPublisherTopic(action, "vehicle") # Descobrindo em Qual Tópico Publicar.
-    if publisherTopic:
-        # Separando as Informações do Parâmetro em Variáveis:
-        vehicleID = vehicleData["vehicleID"] # ID do Veículo.
-        actualBatteryPercentage = vehicleData["actualBatteryPercentage"] # Porcentagem Atual de Bateria do Veículo.
-        batteryCapacity = vehicleData["batteryCapacity"] # Capacidade de Bateria do Veículo em kWh.
-        departureCityCodename = vehicleData["departureCityCodename"] # Apelido da Cidade de Partida.
-        arrivalCityCodename = vehicleData["arrivalCityCodename"] # Apelido da Cidade de Destino.
+async def mqttCreateReservations(client, action: str, vehicleData: dict):
+    # Descobrindo em Qual Tópico Publicar:
+    publisherTopic = findPublisherTopic(action, "vehicle")
+    if not publisherTopic:
+        return # Caso o Tópico de Publicação Não Seja Encontrado.
 
-        # Descobrindo a Rota da Cidade de Partida para a Cidade de Destino:
-        reservationsRoute = ReservationHelper.chooseChargingStations(vehicleID, departureCityCodename, arrivalCityCodename, actualBatteryPercentage, batteryCapacity)
+    # Separando as Informações do Parâmetro em Variáveis:
+    vehicleID = vehicleData["vehicleID"] # ID do Veículo.
+    actualBatteryPercentage = vehicleData["actualBatteryPercentage"] # Porcentagem Atual de Bateria do Veículo.
+    batteryCapacity = vehicleData["batteryCapacity"] # Capacidade de Bateria do Veículo em kWh.
+    departureCityCodename = vehicleData["departureCityCodename"] # Apelido da Cidade de Partida.
+    arrivalCityCodename = vehicleData["arrivalCityCodename"] # Apelido da Cidade de Destino.
+    accountNumber = int(vehicleData["accountNumber"]) # Índice do Endereço da Carteira do Cliente na Blockchain.
 
-        # Formatando a Mensagem do Post para API:
-        reservationsPost = {
-            "vehicleID": vehicleID,
-            "batteryCapacity": batteryCapacity,
-            "reservationsRoute": reservationsRoute
-        }
+    # Descobrindo a Rota da Cidade de Partida para a Cidade de Destino:
+    reservationsRoute = ReservationHelper.chooseChargingStations(vehicleID, departureCityCodename, arrivalCityCodename, actualBatteryPercentage, batteryCapacity)
 
-        # Solicitando a Reserva Através da API Local do Servidor via HTTP:
-        try:
-            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/reservation', json=reservationsPost, timeout=5)
-            # Verificando a Resposta da API:
-            if response.ok: # Atalho Para os Status de Sucesso, de 200 até 300.
-                result = response.json() # Convertendo a Resposta do Flask Para Dicionário.
-                client.publish(publisherTopic, json.dumps(result)) # Enviando a Resposta no MQTT como String no Formato JSON Válido (Aspas Duplas nas Chaves).
-                print("Resposta Enviada Via MQTT:\n")
-                print(json.dumps(result, indent=4, ensure_ascii=False)) # Mensagem Identada.
-                print("\n")
-            else:
-                try:
-                    errorMessage = response.json().get("error") # Copiando a Mensagem de Erro do HTTP.
-                except ValueError:
-                    errorMessage = "Erro Desconhecido"
-                client.publish(publisherTopic, str({"error": errorMessage}))
-                print(f"Erro na Solicitação HTTP ({response.status_code}): {errorMessage}\n")
-        # Tratando as Exceções, Se o Servidor Não Responder:
-        except Exception as e:
-            response, status_code = handleHTTPExceptions(e)
-            errorMessage = response.json().get("error")
-            client.publish(publisherTopic, str({"error": errorMessage}))
-            print(f"Exceção na Solicitação HTTP ({status_code}): {errorMessage}\n")
+    # Caso Não Encontre Uma Rota:
+    if not reservationsRoute:
+        client.publish(publisherTopic, str({"error": vehicleID}))
+        print("Erro ao Encontrar Uma Rota Para os Agendamentos\n")
+        return
+
+    # Separando as Reservas de Cada Servidor:
+    ecoChargeReservationsRoute = [r for r in reservationsRoute if r.get("company") == "ecocharge"]
+    eFluxReservationsRoute = [r for r in reservationsRoute if r.get("company") == "eflux"]
+    voltPointReservationsRoute = [r for r in reservationsRoute if r.get("company") == "voltpoint"]
+
+    # Endereços dos Servidores das Empresas:
+    ECOCHARGE_RESERVATION_ADDRESS = f'http://{os.environ.get('ECOCHARGE_SERVER_IP')}:{int(os.environ.get('ECOCHARGE_SERVER_PORT'))}/reservation'
+    EFLUX_RESERVATION_ADDRESS = f'http://{os.environ.get('EFLUX_SERVER_IP')}:{int(os.environ.get('EFLUX_SERVER_PORT'))}/reservation'
+    VOLTPOINT_RESERVATION_ADDRESS = f'http://{os.environ.get('VOLTPOINT_SERVER_IP')}:{int(os.environ.get('VOLTPOINT_SERVER_PORT'))}/reservation'
+
+    # Adicionando a Tarefa APENAS Se Houver Rota Para o Servidor:
+    tasks = []
+    if ecoChargeReservationsRoute:
+        tasks.append(sendReservationsRequest(ECOCHARGE_RESERVATION_ADDRESS, vehicleID, batteryCapacity, accountNumber, ecoChargeReservationsRoute))
+    if eFluxReservationsRoute:
+        tasks.append(sendReservationsRequest(EFLUX_RESERVATION_ADDRESS, vehicleID, batteryCapacity, accountNumber, eFluxReservationsRoute))
+    if voltPointReservationsRoute:
+        tasks.append(sendReservationsRequest(VOLTPOINT_RESERVATION_ADDRESS, vehicleID, batteryCapacity, accountNumber, voltPointReservationsRoute))
+
+    # Verificando as Respostas e Tomando Decisôes:
+    all_successful = True
+    try:
+        # Pedindo a Todos os Servidores e Esperando as Suas Respostas:
+        responses = await asyncio.gather(*tasks)
+
+        # Analisando as Respostas dos Servidores:
+        idx = 0 # Marcador de Posição das Respostas.
+        if ecoChargeReservationsRoute:
+            if "error" in responses[idx]: all_successful = False
+            idx += 1
+        if eFluxReservationsRoute:
+            if "error" in responses[idx]: all_successful = False
+            idx += 1
+        if voltPointReservationsRoute:
+            if "error" in responses[idx]: all_successful = False
+            idx += 1
+
+        # Verificando Se Todas as Respostas Foram de Sucesso:
+        if all_successful:
+            client.publish(publisherTopic, str({"success": vehicleID}))
+            # MARCAR RESERVAS COMO CONCLUIDAS
+            print(f"Todas as Reservas Para o Veículo '{vehicleID}' Foram Agendadas Com Sucesso!\n")
+        else:
+            client.publish(publisherTopic, str({"error": vehicleID}))
+            # MARCAR RESERVAS COMO CANCELADAS
+            print(f"Alguns Servidores Retornaram Erro nas Reservas Para o Veículo '{vehicleID}'.")
+
+    # Tratando as Exceções, Se o Servidor Não Responder:
+    except Exception as e:
+        response, status_code = handleHTTPExceptions(e)
+        errorMessage = response.json().get("error")
+        client.publish(publisherTopic, str({"error": vehicleID}))
+        print(f"Erro no Agendamento das Reservas ({status_code}): {errorMessage}\n")
 
 # Função Para Inicializar Uma Sessão de Carregamento:
-def mqttStartCS(client, action: str, json: dict):
+async def mqttStartCS(client, action: str, json: dict):
     publisherTopic = findPublisherTopic(action, "vehicle")
     if publisherTopic:
         # Solicitando a Inicialização da Sessão de Carregamento Através da API Local:
         try:
-            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/start_cs', json=json, timeout=5)
-            if response.ok:
-                client.publish(publisherTopic, str({"success": json["reservationID"]}))
-                print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
-            else:
-                try:
-                    errorMessage = response.json().get("error")
-                except ValueError:
-                    errorMessage = "Erro Desconhecido"
-                client.publish(publisherTopic, str({"error": json["reservationID"]}))
-                print(f"Erro na Inicialização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
+            async with aiohttp.ClientSession() as session:
+                async with session.post(f'http://{SERVER_IP}:{SERVER_PORT}/start_cs', json=json, timeout=5) as response:
+                    if response.ok:
+                        client.publish(publisherTopic, str({"success": json["reservationID"]}))
+                        print(f"{await response.text}\n") # Exibindo a Resposta de Sucesso.
+                    else:
+                        try:
+                            errorMessage = (await response.json()).get("error")
+                        except aiohttp.ContentTypeError:
+                            errorMessage = "Erro Desconhecido"
+                        client.publish(publisherTopic, str({"error": json["reservationID"]}))
+                        print(f"Erro na Inicialização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
         # Tratando as Exceções, Se o Servidor Não Responder:
         except Exception as e:
             response, status_code = handleHTTPExceptions(e)
@@ -120,23 +171,25 @@ def mqttStartCS(client, action: str, json: dict):
             client.publish(publisherTopic, str({"error": json["reservationID"]}))
             print(f"Erro na Inicialização da Sessão de Carregamento ({status_code}): {errorMessage}\n")
 
+
 # Função Para Finalizar Uma Sessão de Carregamento:
-def mqttFinishCS(client, action: str, json: dict):
+async def mqttFinishCS(client, action: str, json: dict):
     publisherTopic = findPublisherTopic(action, "vehicle")
     if publisherTopic:
         # Solicitando a Finalização da Sessão de Carregamento Através da API do "Owner" da Blockchain:
         try:
-            response = requests.post(f'http://{OWNER_IP}:{OWNER_PORT}/finish_cs', json=json, timeout=5)
-            if response.ok:
-                client.publish(publisherTopic, str({"success": json["reservationID"]}))
-                print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
-            else:
-                try:
-                    errorMessage = response.json().get("error")
-                except ValueError:
-                    errorMessage = "Erro Desconhecido"
-                client.publish(publisherTopic, str({"error": json["reservationID"]}))
-                print(f"Erro na Finalização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
+            async with aiohttp.ClientSession() as session:
+                async with session.post(f'http://{SERVER_IP}:{SERVER_PORT}/finish_cs', json=json, timeout=5) as response:
+                    if response.ok:
+                        client.publish(publisherTopic, str({"success": json["reservationID"]}))
+                        print(f"{await response.text}\n") # Exibindo a Resposta de Sucesso.
+                    else:
+                        try:
+                            errorMessage = (await response.json()).get("error")
+                        except ValueError:
+                            errorMessage = "Erro Desconhecido"
+                        client.publish(publisherTopic, str({"error": json["reservationID"]}))
+                        print(f"Erro na Finalização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
         # Tratando as Exceções, Se o Servidor Não Responder:
         except Exception as e:
             response, status_code = handleHTTPExceptions(e)
@@ -163,7 +216,7 @@ def onDisconnect(client, userdata, rc):
 def onMessage(client, userdata, message): # Assinatura Padrão da Função.
     # Manipulando a Mensagem:
     decodedMessage = message.payload.decode() # Decodificando a Mensagem, Convertendo Bytes em String.
-    print("Mensagem MQTT Recebida:\n")
+    print("Mensagem MQTT Recebida:")
     print(f"{decodedMessage}\n")
 
     # Verificando a Existência de Json:
@@ -187,7 +240,7 @@ def onMessage(client, userdata, message): # Assinatura Padrão da Função.
     elif topic_action == "create_reservations":
         expectedKeys = ["vehicleID", "actualBatteryPercentage", "batteryCapacity", "departureCityCodename", "arrivalCityCodename", "accountNumber"] # Chaves Esperadas na Mensagem.
         if all(key in jsonMessage for key in expectedKeys): # Verificando Se Todas as Chaves Estão Presentes.
-            mqttCreateReservations(client, topic_action, jsonMessage) # Passando as Informações do Veículo Para a Função.
+            asyncio.create_task(mqttCreateReservations(client, topic_action, jsonMessage)) # Passando as Informações do Veículo Para a Função.
         else:
             missingKeys = [key for key in expectedKeys if key not in jsonMessage]
             print(f"Agendamento das Reservas Impedido, Pois Não Foram Enviadas as Seguintes Informações: {missingKeys}\n")
@@ -196,7 +249,7 @@ def onMessage(client, userdata, message): # Assinatura Padrão da Função.
     # Esperado: {"reservationID", value}
     elif topic_action == "start_charging_session":
         if "reservationID" in jsonMessage:
-            mqttStartCS(client, topic_action, jsonMessage)
+            asyncio.create_task(mqttStartCS(client, topic_action, jsonMessage))
         else:
             print(f"Inicialização da Sessão de Carregamento Impedida, Pois o ID da Reserva Não Foi Indicado!\n")
     
@@ -204,7 +257,7 @@ def onMessage(client, userdata, message): # Assinatura Padrão da Função.
     # Esperado: {"reservationID", value}
     elif topic_action == "end_charging_session":
         if "reservationID" in jsonMessage:
-            mqttFinishCS(client, topic_action, jsonMessage)
+            asyncio.create_task(mqttFinishCS(client, topic_action, jsonMessage))
         else:
             print(f"Finalização da Sessão de Carregamento Impedida, Pois o ID da Reserva Não Foi Indicado!\n")
     
