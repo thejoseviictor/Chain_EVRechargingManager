@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.2 <0.9.0;
 
 // Importando as Dependências dos Outros Contratos:
 import "./AuthorizedServers.sol";
@@ -57,9 +57,8 @@ contract ChargingSessionManager {
         uint256 _reservationID
     ) public onlyServerOrOwner {
         // Verificando as Informações da Reserva:
-        ReservationLedger.Reservation memory reservation = reservationLedger.getReservation(_reservationID);
-        require(reservation.reservationID != 0, "ID da Reserva Invalido!");
-        require(reservation.status == ReservationLedger.Status.CONFIRMED, "A Reserva Nao Esta Confirmada!");
+        require(reservationLedger.getReservation(_reservationID).reservationID != 0, "ID da Reserva Invalido!");
+        require(reservationLedger.getReservation(_reservationID).status == ReservationLedger.Status.CONFIRMED, "A Reserva Nao Esta Confirmada!");
 
         // Verificando o Depósito dos Fundos no Escrow:
         require(escrow.getEscrowPaymentStatus(_reservationID).paidToEscrow, "Os Fundos Nao Foram Depositados Para Esta Reserva!");
@@ -70,7 +69,7 @@ contract ChargingSessionManager {
         // Criando a Nova Sessão de Recarga:
         chargingSessions[_reservationID] = ChargingSession({
             reservationID: _reservationID,
-            customer: reservation.customer,
+            customer: reservationLedger.getReservation(_reservationID).customer,
             status: SessionStatus.IN_PROGRESS
         });
 
