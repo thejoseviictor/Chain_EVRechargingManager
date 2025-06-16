@@ -1,24 +1,20 @@
-# Será Armazenada no Arquivo de Reservas do Postos de Recarga:
-
 import json
 import os
+from web3 import Web3
 import datetime
 from ChargingPointsFile import ChargingPointsFile
 
 class Reservation:
     # Inicializando a Classe e seus Atributos:
-    def __init__(self, reservationID: int, chargingStationID: int, chargingPointID: int, cityName: str, cityCodename: str, companyName: str, chargingPointPower: float,
-                 kWhPrice: float, vehicleID: int, actualBatteryPercentage: int, batteryCapacity: float, lastReservationFinishDateTime, timeToReach: float):
-        self.reservationID = reservationID    # ID da Reserva.
+    def __init__(self, chargingStationID: int, chargingPointID: int, cityCodename: str, companyName: str, chargingPointPower: float, kWhPrice: float,
+                 actualBatteryPercentage: int, batteryCapacity: float, lastReservationFinishDateTime, timeToReach: float):
         self.chargingStationID = chargingStationID  # ID do Posto de Recarga.
         self.chargingPointID = chargingPointID  # ID do Ponto de Carregamento.
-        self.cityName = cityName # Nome da Cidade.
         self.cityCodename = cityCodename # Apelido da Cidade.
         self.companyName = companyName # Nome da Empresa.
-        self.chargingPointPower = chargingPointPower # Potência do Ponto de Carregamento em Watt.
+        self.chargingPointPower = chargingPointPower # Potência do Ponto de Carregamento em kW.
         self.kWhPrice = kWhPrice    # Preço do kWh do Ponto de Carregamento.
-        self.vehicleID = vehicleID  # ID do Veículo.
-        self.duration = self.calculateDuration(actualBatteryPercentage, batteryCapacity) # Duração da Recarga em Horas.
+        self.durationHours = self.calculateDuration(actualBatteryPercentage, batteryCapacity) # Duração da Recarga em Horas.
         self.timeToReach = timeToReach # Tempo Necessário, em Horas, Para o Veículo Alcançar Essa Reserva.
         self.startDateTime = self.calculateStartDateTime(lastReservationFinishDateTime) # Formato ISO: 0000-00-00T00:00:00 (Ano, Mês, Dia, T(Separador Entre Data e Hora), Hora, Minutos, Segundos)
         self.finishDateTime = self.calculateFinishDateTime() # Formato ISO: 0000-00-00T00:00:00 (Ano, Mês, Dia, T(Separador Entre Data e Hora), Hora, Minutos, Segundos)
@@ -27,7 +23,7 @@ class Reservation:
     # Calculando o Preço da Recarga:
     # kWh = Potência do Carregador (kW) * Tempo (Horas)
     def calculatePrice(self):
-        kWh = self.chargingPointPower * self.duration
+        kWh = self.chargingPointPower * self.durationHours
         return kWh * self.kWhPrice
 
     # Calculando o Tempo para Completar a Carga de Bateria do Veículo:
@@ -51,50 +47,48 @@ class Reservation:
         finish = start + datetime.timedelta(hours=self.duration) # Calculando a Data de Finalização.
         return finish.isoformat() # Codificando a Data de Finalização do DateTime para Formato ISO.
 
-# Salvando as Reservas em um Arquivo ".json":
-class ReservationsFile: 
-    # Inicializando a Classe e seus Atributos:
-    def __init__(self, json_file="reservations.json"):
-        os.makedirs("data", exist_ok=True) # Criando a Pasta "data", Se Não Existir.
-        self.json_file = os.path.join("data", json_file) # Salvando o Banco de Dados na Pasta "data".
+# Manipulação de Dados das Reservas:
+class ReservationsManager:
+    def __init__(self, rl_contract):
+        self.rl_contract = rl_contract # Contrato "ReservationLedger".
         self.reservationsList = [] # Lista de Reservas.
-        self.readReservations() # Recuperando os Dados do Arquivo ".json"
     
-    # Lendo as Reservas no Arquivo ".json":
-    def readReservations(self):
-        if os.path.exists(self.json_file):
-            try:
-                with open(self.json_file, "r", encoding="utf-8") as file:
-                    self.reservationsList = json.load(file) # Salvando os Dados na Lista.
-            except json.JSONDecodeError:
-                print(f"Arquivo '{self.json_file}' Está Inválido ou Vazio!\n")
-    
-    # Verificando Se o Veículo Tem Reserva em um Posto de Recarga Específico:
-    def findReservation(self, chargingStationID: int, vehicleID: int):
-        self.readReservations() # Atualizando a Memória de Execução Com o Banco de Dados em "reservations.json".
-        for reservation in self.reservationsList:
-            if reservation["chargingStationID"] == chargingStationID and reservation["vehicleID"] == vehicleID:
-                return reservation
-        print(f"Nenhuma Reserva Foi Encontrada Para o Veículo com ID '{vehicleID}' no Posto de Recarga '{chargingStationID}'!\n")
-        return None
+    # Recuperando as Reservas Salvas na Blockchain:
+    def getReservationsOnBlockchain(self, rl_contract):
+        reservations = rl_contract.functions.getAllReservations().call()
+        # Convertendo a Tupla de Reservas para Dicionário:
+        for res in reservations:
+            res_dict = {
+                "reservationID": res[0],
+                "chargingStationID": res[1],
+                "chargingPointID": res[2],
+                "cityCodename": res[3],
+                "companyName": res[4],
+                "chargingPointPower": res[5],
+                "kWhPrice": res[6],
+                "startDateTime": datetime.utcfromtimestamp(res[7]).isoformat(),
+                "finishDateTime": datetime.utcfromtimestamp(res[8]).isoformat(),
+                "price": res[9],
+                "customer": res[10],
+                "status": res[11]
+            }
+            self.reservationsList.append(res_dict)
+        # Exibindo Mensagem de Sucesso:
+        print(f"{len(self.reservationsList)} Reservas Recuperadas da Blockchain Para Memória de Trabalho.\n")
 
     # Listando Todas as Reservas Cadastradas para os Pontos de Carregamento, em um Posto de Recarga Específico:
     def listReservations(self, chargingStationID: int):
+        self.getReservationsOnBlockchain(self.rl_contract) # Recuperando os Dados da Blockchain.
         searchList = [] # Onde Serão Salvas as Reservas Encontradas.
         for reservation in self.reservationsList:
             if reservation["chargingStationID"] == chargingStationID:
                 searchList.append(reservation)
         return searchList # Retornando as Reservas Encontradas.
 
-    # Salvando a Lista de Reservas no Arquivo ".json":
-    def saveReservations(self):
-        with open(self.json_file, "w", encoding="utf-8") as file:
-            json.dump(self.reservationsList, file, indent=4, ensure_ascii=False)
-
     # Encontrando a Data de Finalização da Última Reserva Cadastrada em um Ponto de Carregamento Específico:
     # Resumindo, Descobrir Quando o Último Veículo Vai Terminar de Usar o Ponto de Carregamento.
     def getLastReservationFinishDateTime(self, chargingStationID: int, chargingPointID: int):
-        self.readReservations() # Atualizando a Memória de Execução Com o Banco de Dados em "reservations.json".
+        self.getReservationsOnBlockchain(self.rl_contract) # Recuperando os Dados da Blockchain.
         found = False # Indicará Se um Data Posterior For Encontrada.
         lastDateTime = datetime.datetime(1999, 12, 31, 0, 0, 0) # Data de Base para Comparação Inicial.
         # Percorrendo a Lista de Reservas:
@@ -110,17 +104,6 @@ class ReservationsFile:
         # Retorna "None", Se Não Houver Nenhuma Reserva no Ponto de Carregamento:
         else:
             return None
-    
-    # Gerando um ID para Nova Reserva:
-    # Os IDs Não Podem Ser Iguais Para o Mesmo Servidor.
-    # IDs Novos: Maior ID + 1.
-    def generateReservationID(self):
-        startID = 1 # Um ID Inicial Que Será Usado Como Comparador.
-        for reservation in self.reservationsList:
-            # ID Maior ou Igual (Para o Primeiro ID das Reservas):
-            if reservation["reservationID"] >= startID:
-                startID = reservation["reservationID"] + 1
-        return startID
     
     # Criando uma Reserva e Salvando no Arquivo ".json":
     def createReservation(self, chargingStationID: int, chargingPointID: int, cityName: str, cityCodename: str, companyName: str,
@@ -168,16 +151,3 @@ class ReservationsFile:
         else:
             print(f'Ponto de Carregamento com ID {chargingPointID}, no Posto de Recarga com ID {chargingStationID}, Não Foi Encontrado!\n')
             return None
-    
-    # Removendo uma Reserva de um Veículo Específico:
-    def deleteReservation(self, reservationID: int, chargingStationID: int, chargingPointID: int, vehicleID: int):
-        self.readReservations() # Atualizando a Memória de Execução.
-        for reservation in self.reservationsList:
-            if reservation["reservationID"] == reservationID and reservation["vehicleID"] == vehicleID:
-                if reservation["chargingStationID"] == chargingStationID and reservation["chargingPointID"] == chargingPointID:
-                    self.reservationsList.remove(reservation)
-                    self.saveReservations() # Salvando no Arquivo ".json".
-                    print(f"A Reserva Com ID '{reservationID}' Foi Removida com Sucesso!\n")
-                    return True
-        print(f"A Reserva Com ID '{reservationID}' Não Foi Encontrada!\n")
-        return None
