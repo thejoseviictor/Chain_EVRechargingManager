@@ -5,8 +5,8 @@ import time
 import os
 
 GANACHE_URL = os.environ.get('GANACHE_URL')
-BROKER_IP = "localhost"
-BROKER_PORT = 1883
+BROKER_IP = os.environ.get('MQTT_BROKER_HOST')
+BROKER_PORT = os.environ.get('MQTT_BROKER_PORT')
 MQTT_TOPICS_PUBLISHER = {
     "vehicle/contracts_addresses/server",
     "vehicle/create_reservations/server",

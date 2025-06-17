@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Serviço do Ganache:
   ganache:
-    image: trufflesuite/ganache:v7.9.2
+    image: trufflesuite/ganache:latest
     container_name: ganache
     ports:
       - "8545:8545"
@@ -40,7 +40,7 @@ services:
     image: eclipse-mosquitto
     container_name: mosquitto_broker
     ports:
-      - "1883:1883"
+      - "64035:64035"
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./mosquitto/data:/mosquitto/data
