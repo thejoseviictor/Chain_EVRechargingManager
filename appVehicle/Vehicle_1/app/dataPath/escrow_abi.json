@@ -1,0 +1,290 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_authorizedServersAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_reservationLedgerAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_chargingSessionManagerAddress",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint16",
+				"name": "reservationID",
+				"type": "uint16"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "payer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "recipient",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint72",
+				"name": "amount",
+				"type": "uint72"
+			}
+		],
+		"name": "EscrowInitialized",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint16",
+				"name": "reservationID",
+				"type": "uint16"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "payer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint72",
+				"name": "amount",
+				"type": "uint72"
+			}
+		],
+		"name": "FundsDeposited",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint16",
+				"name": "reservationID",
+				"type": "uint16"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "recipient",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint72",
+				"name": "amount",
+				"type": "uint72"
+			}
+		],
+		"name": "FundsReleased",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "authorizedServers",
+		"outputs": [
+			{
+				"internalType": "contract AuthorizedServers",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "chargingSessionManager",
+		"outputs": [
+			{
+				"internalType": "contract ChargingSessionManager",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "_reservationID",
+				"type": "uint16"
+			}
+		],
+		"name": "depositFunds",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "",
+				"type": "uint16"
+			}
+		],
+		"name": "escrowPayments",
+		"outputs": [
+			{
+				"internalType": "address payable",
+				"name": "payer",
+				"type": "address"
+			},
+			{
+				"internalType": "address payable",
+				"name": "recipient",
+				"type": "address"
+			},
+			{
+				"internalType": "uint72",
+				"name": "amount",
+				"type": "uint72"
+			},
+			{
+				"internalType": "bool",
+				"name": "paidToEscrow",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "released",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint32",
+				"name": "paymentTimestamp",
+				"type": "uint32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "_reservationID",
+				"type": "uint16"
+			}
+		],
+		"name": "getEscrowPaymentStatus",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address payable",
+						"name": "payer",
+						"type": "address"
+					},
+					{
+						"internalType": "address payable",
+						"name": "recipient",
+						"type": "address"
+					},
+					{
+						"internalType": "uint72",
+						"name": "amount",
+						"type": "uint72"
+					},
+					{
+						"internalType": "bool",
+						"name": "paidToEscrow",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "released",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint32",
+						"name": "paymentTimestamp",
+						"type": "uint32"
+					}
+				],
+				"internalType": "struct Escrow.EscrowPayment",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "_reservationID",
+				"type": "uint16"
+			}
+		],
+		"name": "initializeEscrow",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "_reservationID",
+				"type": "uint16"
+			}
+		],
+		"name": "releaseFunds",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "reservationLedger",
+		"outputs": [
+			{
+				"internalType": "contract ReservationLedger",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]

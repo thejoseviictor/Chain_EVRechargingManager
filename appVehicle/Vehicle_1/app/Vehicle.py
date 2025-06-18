@@ -27,6 +27,7 @@ class Vehicle:
 
         self.reservationsList = [] # Guarda as reservas
         self.recharge_list = [] # Guarda os IDs de reservas que estão em recarga
+        self.history_recharges = []
 
         self.utility = VehicleUtility()
 
@@ -40,7 +41,20 @@ class Vehicle:
          print(f"\n\t Crédito saldo : {self.moneyCredit}")
          print(f"\n\t Bateria atual(kWh) : {self.currentEnergy}%")
          print(f"\n\t Capacidade total da bateria(kWh) : {self.maximumBattery}%")
-         
+
+    def payRecharge(self, w3, account_address, contract_address, abiFilePath):
+
+        with open(abiFilePath, 'r') as f:
+            abi = json.load(f)
+        
+        w3.eth.contract(address=contract_address, abi=abi)
+
+        contractAddress = w3.to_checksum_address(contract_address)
+
+        contract = w3.eth.contract(address=contractAddress, abi=abi)
+
+
+
 
     def showReservations(self, w3, account_address, contract_address, abiFilePath): # Método para visualizar todas as reservas efetuadas para o veículo na blockchain
         
@@ -78,11 +92,11 @@ class Vehicle:
         
         self.reservationsList = current_list
 
-        for r in self.recharge_list:
-            print(r)
+        for r in self.reservationsList:
+
+            print(r) # Mudar a exibição
             print('----------------------------------------------------------')
 
-   
 
     def savingLoginData(self, dataFilePath: str): # Método para salvar novos dados gerados na opção "2 - CRIAR CONTA"
 
@@ -154,9 +168,21 @@ class Vehicle:
         else:
             for r, id in enumerate(self.recharge_list):
                 if ID_reservation == id:
+                    self.history_recharges.append(id)
                     self.recharge_list.remove(id)
 
     def showRecharges(self):
+
+        print('Lista de recargas (iniciadas) : \n')
+
+        for r, id in enumerate(self.recharge_list):
+            print(f'\n\t ID de recarga {r+1} : {id}')
+            print('-----------------------------------------------------')
+    
+    def showHistoryRecharges(self):
+        print('Histórico de recargas (finalizadas): \n')
+
+        for r, id in enumerate(self.history_recharges):
+            print(f'\n\t ID de recarga {r+1} : {id}')
+            print('-----------------------------------------------------')
         
-        for r in self.recharge_list:
-            print(r)

@@ -1,4 +1,4 @@
-[
+[[
 	{
 		"inputs": [
 			{
@@ -15,14 +15,20 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			},
 			{
 				"indexed": false,
 				"internalType": "address",
 				"name": "customer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "recipient",
 				"type": "address"
 			},
 			{
@@ -33,9 +39,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "uint256",
+				"internalType": "uint72",
 				"name": "price",
-				"type": "uint256"
+				"type": "uint72"
 			}
 		],
 		"name": "ReservationCreated",
@@ -46,9 +52,9 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			},
 			{
 				"indexed": false,
@@ -76,9 +82,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "_reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "cancelReservation",
@@ -89,9 +95,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "_reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "confirmReservation",
@@ -102,14 +108,14 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint8",
 				"name": "_chargingStationID",
-				"type": "uint256"
+				"type": "uint8"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "uint8",
 				"name": "_chargingPointID",
-				"type": "uint256"
+				"type": "uint8"
 			},
 			{
 				"internalType": "string",
@@ -122,33 +128,28 @@
 				"type": "string"
 			},
 			{
-				"internalType": "uint256",
-				"name": "_chargingPointPower",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_kWhPrice",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
+				"internalType": "uint32",
 				"name": "_startTimestamp",
-				"type": "uint256"
+				"type": "uint32"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "uint32",
 				"name": "_finishTimestamp",
-				"type": "uint256"
+				"type": "uint32"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "uint72",
 				"name": "_price",
-				"type": "uint256"
+				"type": "uint72"
 			},
 			{
 				"internalType": "address",
 				"name": "_customerAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_companyAddress",
 				"type": "address"
 			}
 		],
@@ -164,19 +165,19 @@
 			{
 				"components": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "reservationID",
-						"type": "uint256"
+						"type": "uint16"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint8",
 						"name": "chargingStationID",
-						"type": "uint256"
+						"type": "uint8"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint8",
 						"name": "chargingPointID",
-						"type": "uint256"
+						"type": "uint8"
 					},
 					{
 						"internalType": "string",
@@ -189,33 +190,28 @@
 						"type": "string"
 					},
 					{
-						"internalType": "uint256",
-						"name": "chargingPointPower",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "kWhPrice",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
+						"internalType": "uint32",
 						"name": "startTimestamp",
-						"type": "uint256"
+						"type": "uint32"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint32",
 						"name": "finishTimestamp",
-						"type": "uint256"
+						"type": "uint32"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint72",
 						"name": "price",
-						"type": "uint256"
+						"type": "uint72"
 					},
 					{
 						"internalType": "address payable",
 						"name": "customer",
+						"type": "address"
+					},
+					{
+						"internalType": "address payable",
+						"name": "recipient",
 						"type": "address"
 					},
 					{
@@ -235,9 +231,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "_reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "getReservation",
@@ -245,19 +241,19 @@
 			{
 				"components": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "reservationID",
-						"type": "uint256"
+						"type": "uint16"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint8",
 						"name": "chargingStationID",
-						"type": "uint256"
+						"type": "uint8"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint8",
 						"name": "chargingPointID",
-						"type": "uint256"
+						"type": "uint8"
 					},
 					{
 						"internalType": "string",
@@ -270,33 +266,28 @@
 						"type": "string"
 					},
 					{
-						"internalType": "uint256",
-						"name": "chargingPointPower",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "kWhPrice",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
+						"internalType": "uint32",
 						"name": "startTimestamp",
-						"type": "uint256"
+						"type": "uint32"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint32",
 						"name": "finishTimestamp",
-						"type": "uint256"
+						"type": "uint32"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint72",
 						"name": "price",
-						"type": "uint256"
+						"type": "uint72"
 					},
 					{
 						"internalType": "address payable",
 						"name": "customer",
+						"type": "address"
+					},
+					{
+						"internalType": "address payable",
+						"name": "recipient",
 						"type": "address"
 					},
 					{
@@ -326,19 +317,19 @@
 			{
 				"components": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "reservationID",
-						"type": "uint256"
+						"type": "uint16"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint8",
 						"name": "chargingStationID",
-						"type": "uint256"
+						"type": "uint8"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint8",
 						"name": "chargingPointID",
-						"type": "uint256"
+						"type": "uint8"
 					},
 					{
 						"internalType": "string",
@@ -351,33 +342,28 @@
 						"type": "string"
 					},
 					{
-						"internalType": "uint256",
-						"name": "chargingPointPower",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "kWhPrice",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
+						"internalType": "uint32",
 						"name": "startTimestamp",
-						"type": "uint256"
+						"type": "uint32"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint32",
 						"name": "finishTimestamp",
-						"type": "uint256"
+						"type": "uint32"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint72",
 						"name": "price",
-						"type": "uint256"
+						"type": "uint72"
 					},
 					{
 						"internalType": "address payable",
 						"name": "customer",
+						"type": "address"
+					},
+					{
+						"internalType": "address payable",
+						"name": "recipient",
 						"type": "address"
 					},
 					{
@@ -397,12 +383,12 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "_reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
-		"name": "markReservationAsPayed",
+		"name": "markReservationAsPaid",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -412,9 +398,9 @@
 		"name": "nextReservationID",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"stateMutability": "view",
@@ -436,27 +422,27 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "reservations",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "uint8",
 				"name": "chargingStationID",
-				"type": "uint256"
+				"type": "uint8"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "uint8",
 				"name": "chargingPointID",
-				"type": "uint256"
+				"type": "uint8"
 			},
 			{
 				"internalType": "string",
@@ -469,33 +455,28 @@
 				"type": "string"
 			},
 			{
-				"internalType": "uint256",
-				"name": "chargingPointPower",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "kWhPrice",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
+				"internalType": "uint32",
 				"name": "startTimestamp",
-				"type": "uint256"
+				"type": "uint32"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "uint32",
 				"name": "finishTimestamp",
-				"type": "uint256"
+				"type": "uint32"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "uint72",
 				"name": "price",
-				"type": "uint256"
+				"type": "uint72"
 			},
 			{
 				"internalType": "address payable",
 				"name": "customer",
+				"type": "address"
+			},
+			{
+				"internalType": "address payable",
+				"name": "recipient",
 				"type": "address"
 			},
 			{

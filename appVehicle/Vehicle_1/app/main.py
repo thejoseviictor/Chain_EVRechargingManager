@@ -51,8 +51,9 @@ DATA_PATH = BASE_DIR / 'dataPath' # Caminho da pasta "dataPath"
 
 #Definindo o caminho de cada arquivo de dados
 dataFilePath = str(DATA_PATH / 'data.json')
-abiFilePath = str(DATA_PATH / 'abi.json')
 reservationsFilePath = str(DATA_PATH / 'reservations.json')
+reservation_ledger_abiFilePath = str(DATA_PATH / 'reservation_ledger_abi.json')
+escrow_abi_FilePath = str(DATA_PATH / 'escrow_abi.json')
 
 # Métodos utilitários --------------------------------------------------------------------------
 
@@ -229,7 +230,7 @@ while(repeat):
         1. A opção 1 é para realizar a reserva, onde a origem e o destino da viagem é determinado e passado para o servidor via comunicação MQTT
         2. A opção 2 é usada para ver a(s) reserva(s) do veículo já realizadas
         3. A opção 3 é para ver as informações de conta
-        4. A opção 4 é para iniciar ou finalizar recarga
+        4. A opção 4 é para: 1. Iniciar recarga,  2. Finalizar recarga, 3.Ver histórico de recarga
         5. A opção 5 permite voltar para o início do programa
         6. Interrompe totalmente o programa
 
@@ -273,9 +274,10 @@ while(repeat):
 
             
         elif reply == "2" : # Opção 2: Ver reservas
-            contract = contracts_addresses["ReservationLedger"]
 
-            vehicle.showReservations(w3, account_address, contract, abiFilePath)
+            contract_reservation_ledger = contracts_addresses["ReservationLedger"]
+
+            vehicle.showReservations(w3, account_address, contract_reservation_ledger, reservation_ledger_abiFilePath)
             utility.writeReplyBack(wrongActions, repeat)
         
         elif reply == "3": # Opção 3: Mostrar informações de conta
@@ -287,13 +289,15 @@ while(repeat):
 
             type_recharge = '0'
 
-            answer_recharge = input("O que deseja fazer ? \n\t 1. Iniciar carregamento \n\t 2. Finalizar carregamento \n\t -> ")
+            answer_recharge = input("O que deseja fazer ? \n\t 1. Iniciar carregamento \n\t 2. Finalizar carregamento \n\t 3. Ver histórico de recargas -> ")
 
             if answer_recharge == '1' :
 
-                vehicle.showReservations(w3, account_address, contract, abiFilePath)
+                contract_reservation_ledger_address = contracts_addresses["ReservationLedger"]
+
+                vehicle.showReservations(w3, account_address, contract_reservation_ledger_address, reservation_ledger_abiFilePath)
                 
-                ID_reservation = input ('Digite o ID da reserva que deseja iniciar a recarga : \n\t ->')
+                ID_reservation = input ('\n\t Digite o ID da reserva que deseja iniciar a recarga : \n\t ->')
                 
                 utility.clearTerminal()
                 type_subscribe = '3'
@@ -302,19 +306,28 @@ while(repeat):
                 type_recharge = '1'
                 vehicle.manageRecharge(type_recharge, ID_reservation)
 
-            else:
+            elif answer_recharge == '2':
                 
+                contract_escrow_address = contracts_addresses["Escrow"]
+
                 vehicle.showRecharges()
 
                 ID_reservation = input ('Digite o ID da reserva que deseja finalizar a recarga : \n\t ->')
 
                 utility.clearTerminal()
-                
+
+                vehicle.payRecharge(w3, account_address, contract_escrow_address, escrow_abi_FilePath)
+
                 type_subscribe = '4'
                 vClient = VehicleClient(client_MQTT, vehicle, route, account_number, ID_reservation, type_subscribe)
 
                 type_recharge = '2'
-                vehicle.manageRecharge(type_recharge,ID_reservation)
+                vehicle.manageRecharge(type_recharge, ID_reservation)
+
+            else:
+                vehicle.showHistoryRecharges()
+                utility.writeReplyBack(wrongActions, repeat)
+
 
         elif reply == "5": # Opção 5: Voltar para o início do programa
             wrongActions = False

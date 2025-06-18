@@ -17,7 +17,7 @@ class VehicleClient:
         
         self.client = client
         self.serverHOST = 'localhost'
-        self.serverPORT = 1883
+        self.serverPORT = 62325 #1883
         self.cost = 0.0
         self.type_subscribe = type_subscribe
         self.ID_reservation = ID_reservation
@@ -55,7 +55,9 @@ class VehicleClient:
             if self.type_subscribe == 1 :
             
                 self.client.subscribe("server/contracts_addresses/vehicle") # Realiza a inscrição para receber os endereços de contrato
-            
+
+                self.client.publish("vehicle/contracts_addresses/server" , "OK")
+
             elif self.type_subscribe == 2 :
                 
                 self.client.subscribe("server/create_reservations/vehicle") # Realiza a inscrição para receber resposta de reservas efetuadas ou não
@@ -131,8 +133,6 @@ class VehicleClient:
             else :
                 print('rMessage')
             
-            
-    
     def on_publish(self, client, userdata, mid):
         print("\n\t Requisição publicada com sucesso! ")
         time.sleep(2)
