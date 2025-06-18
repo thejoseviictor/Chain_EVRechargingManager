@@ -21,8 +21,8 @@ MQTT_TOPICS_SUBSCRIBER = {
     "server/end_charging_session/vehicle"
 }
 
+vehicle_account_index = 1
 execution_step = 0
-reservationsList = []
 
 # Caminho dos Contratos:
 CONTRACTS_DIR = 'build/contracts/'
@@ -51,19 +51,14 @@ def mqttReceiveContractsAddresses(client):
 
 def showAccountsBalance():
     # Salvando os Endereços das Contas:
+    vehicle_account = w3.eth.accounts[vehicle_account_index]
     ecocharge_account = w3.eth.accounts[int(os.environ.get('ECOCHARGE_ACCOUNT'))]
     eflux_account = w3.eth.accounts[int(os.environ.get('EFLUX_ACCOUNT'))]
     voltpoint_account = w3.eth.accounts[int(os.environ.get('VOLTPOINT_ACCOUNT'))]
-    # Exibindo o Balanço dos Veículos:
-    balance_wei = w3.eth.get_balance(w3.eth.accounts[1])
+    # Exibindo o Balanço do Veículo:
+    balance_wei = w3.eth.get_balance(vehicle_account)
     balance_eth = w3.from_wei(balance_wei, 'ether')
-    print(f"Saldo da Conta do Veículo 1: {balance_wei} wei ({balance_eth} ETH)\n")
-    balance_wei = w3.eth.get_balance(w3.eth.accounts[2])
-    balance_eth = w3.from_wei(balance_wei, 'ether')
-    print(f"Saldo da Conta do Veículo 2: {balance_wei} wei ({balance_eth} ETH)\n")
-    balance_wei = w3.eth.get_balance(w3.eth.accounts[3])
-    balance_eth = w3.from_wei(balance_wei, 'ether')
-    print(f"Saldo da Conta do Veículo 3: {balance_wei} wei ({balance_eth} ETH)\n")
+    print(f"Saldo da Conta do Veículo: {balance_wei} wei ({balance_eth} ETH)\n")
     # Exibindo o Balanço do Servidor "EcoCharge":
     balance_wei = w3.eth.get_balance(ecocharge_account)
     balance_eth = w3.from_wei(balance_wei, 'ether')
@@ -77,21 +72,20 @@ def showAccountsBalance():
     balance_eth = w3.from_wei(balance_wei, 'ether')
     print(f"Saldo da Conta da Empresa 'EcoCharge': {balance_wei} wei ({balance_eth} ETH)\n")
 
-def mqttScheduleReservations(client, index):
+def mqttScheduleReservations(client):
     data = {
-        "vehicleID": index,
+        "vehicleID": vehicle_account_index,
         "actualBatteryPercentage": 100,
         "batteryCapacity": 51,
         "departureCityCodename": "v_conquista",
         "arrivalCityCodename": "fortaleza",
-        "accountNumber": index
+        "accountNumber": vehicle_account_index
     }
     client.publish("vehicle/create_reservations/server", json.dumps(data))
 
-def depositFunds(index):
-    global reservationsList
-    print(f"Depositando os Fundos das Reservas do Veículo '{index}':\n")
-    vehicle_account = w3.eth.accounts[index]
+def depositFunds():
+    vehicle_account = w3.eth.accounts[vehicle_account_index]
+    reservationsList = []
     rl_contract = w3.eth.contract(address=contracts_addresses["ReservationLedger"], abi=getContractData("ReservationLedger")) # Reservas.
     escrow_contract = w3.eth.contract(address=contracts_addresses["Escrow"], abi=getContractData("Escrow")) # Escrow de Pagamento.
     assert Web3.is_address(vehicle_account), "Endereço da Conta do Veículo Inválido!\n"
@@ -129,20 +123,16 @@ def depositFunds(index):
         w3.eth.wait_for_transaction_receipt(tx_hash)
 
 def mqttStartCS(client):
-    print(f"Iniciando as Sessões de Carregamento de Todas as Reservas:\n")
-    for rs in reservationsList:
-        data = {
-            "reservationID": rs["reservationID"],
-        }
-        client.publish("vehicle/start_charging_session/server", json.dumps(data))
+    data = {
+        "reservationID": 1,
+    }
+    client.publish("vehicle/start_charging_session/server", json.dumps(data))
 
 def mqttFinishCS(client):
-    print(f"Finalizando as Sessões de Carregamento de Todas as Reservas:\n")
-    for rs in reservationsList:
-        data = {
-            "reservationID": rs["reservationID"],
-        }
-        client.publish("vehicle/end_charging_session/server", json.dumps(data))
+    data = {
+        "reservationID": 1,
+    }
+    client.publish("vehicle/end_charging_session/server", json.dumps(data))
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -172,16 +162,11 @@ def on_message(client, userdata, message):
         contracts_addresses = json.loads(decodedMessage)
         execution_step = 1  # Avançando Para o Próximo Passo.
         time.sleep(2)
-        mqttScheduleReservations(client, 1)
-        mqttScheduleReservations(client, 2)
-        mqttScheduleReservations(client, 3)
-        time.sleep(15)
+        mqttScheduleReservations(client)
 
     elif topic_action == "create_reservations" and execution_step == 1:
         time.sleep(2)
-        depositFunds(1)
-        depositFunds(2)
-        depositFunds(3)
+        depositFunds()
         execution_step = 2
         mqttStartCS(client)
 
