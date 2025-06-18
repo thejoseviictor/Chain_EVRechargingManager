@@ -105,7 +105,7 @@ def depositFunds():
             "recipient": res[9],
             "status": res[10]
         }
-        print(f"Informações da Reserva '{reservation["reservationID"]}':\n")
+        print(f"Informações da Reserva '{res_dict["reservationID"]}':\n")
         print(json.dumps(res_dict, indent=4)) # Printando a Reserva.
         reservationsList.append(res_dict)
     # Exibindo Mensagem de Sucesso:
