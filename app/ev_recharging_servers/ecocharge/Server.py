@@ -158,7 +158,7 @@ def finishCS():
     data = request.json
     reservationID = int(data.get('reservationID'))
     # Solicitando a Finalização da Sessão de Carregamento na Blockchain:
-    finished = startChargingSession(w3, csm_contract, company_accounts[f"{companyName.lower()}"], reservationID)
+    finished = finishChargingSession(w3, csm_contract, company_accounts[f"{companyName.lower()}"], reservationID)
     if finished:
         return f"Sucesso ao Finalizar a Sessão de Carregamento da Reserva '{reservationID}'", 200
     else:
