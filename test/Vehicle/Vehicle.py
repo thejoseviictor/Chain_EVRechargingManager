@@ -54,7 +54,7 @@ def mqttScheduleReservations(client):
         "actualBatteryPercentage": 100,
         "batteryCapacity": 51,
         "departureCityCodename": "v_conquista",
-        "arrivalCityCodename": "e_cunha",
+        "arrivalCityCodename": "fortaleza",
         "accountNumber": 1
     }
     client.publish("vehicle/create_reservations/server", json.dumps(data))
