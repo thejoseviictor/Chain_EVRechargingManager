@@ -5,6 +5,8 @@ import os # Para Usar Variáveis de Ambiente.
 import json # Para Printar os Erros.
 import requests # Para Comunicação com Outros Servidores.
 import paho.mqtt.client as mqtt # Funções do MQTT.
+import threading # Para Tratar a Condição de Corrida.
+import time # Para Tratar Requisições Duplicadas no MQTT.
 from Server import SERVER_IP, SERVER_PORT, contracts_addresses
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
 
@@ -25,6 +27,16 @@ MQTT_TOPICS_PUBLISHER = {
     "server/start_charging_session/vehicle",
     "server/end_charging_session/vehicle"
 }
+
+# Criando um Bloqueio (Mutex), Que Não Pertence a Thread Que o Bloquear:
+# É um Recurso de Software do Python;
+# Impede o Acesso a Recursos Compartilhados, Quando uma Thread os Estiver Utilizando;
+# Tem Dois Estados: locked (bloqueado) e unlocked (desbloqueado).
+lock = threading.Lock()
+
+# Para Tratar Requisições Duplicadas no MQTT:
+vehicleLastSeen = {} # Dicionário do Tempo das Requisições dos Veículos.
+vehicleTimeOutSeconds = 10  # 10 Segundos Para o Mesmo "vehicleID".
 
 # Verificando a Existência de Json:
 def isJson(text):
@@ -52,135 +64,138 @@ def mqttSendContractsAddresses(client, action: str):
 
 # Função para Criar Reservas, Recebida por um Tópico do MQTT:
 def mqttCreateReservations(client, action: str, vehicleData: dict):
-    # Descobrindo em Qual Tópico Publicar:
-    publisherTopic = findPublisherTopic(action, "vehicle")
-    if not publisherTopic:
-        return # Caso o Tópico de Publicação Não Seja Encontrado.
+    with lock:
+        # Descobrindo em Qual Tópico Publicar:
+        publisherTopic = findPublisherTopic(action, "vehicle")
+        if not publisherTopic:
+            return # Caso o Tópico de Publicação Não Seja Encontrado.
 
-    # Separando as Informações do Parâmetro em Variáveis:
-    vehicleID = vehicleData["vehicleID"] # ID do Veículo.
-    actualBatteryPercentage = vehicleData["actualBatteryPercentage"] # Porcentagem Atual de Bateria do Veículo.
-    batteryCapacity = vehicleData["batteryCapacity"] # Capacidade de Bateria do Veículo em kWh.
-    departureCityCodename = vehicleData["departureCityCodename"] # Apelido da Cidade de Partida.
-    arrivalCityCodename = vehicleData["arrivalCityCodename"] # Apelido da Cidade de Destino.
-    accountNumber = int(vehicleData["accountNumber"]) # Índice do Endereço da Carteira do Cliente na Blockchain.
+        # Separando as Informações do Parâmetro em Variáveis:
+        vehicleID = vehicleData["vehicleID"] # ID do Veículo.
+        actualBatteryPercentage = vehicleData["actualBatteryPercentage"] # Porcentagem Atual de Bateria do Veículo.
+        batteryCapacity = vehicleData["batteryCapacity"] # Capacidade de Bateria do Veículo em kWh.
+        departureCityCodename = vehicleData["departureCityCodename"] # Apelido da Cidade de Partida.
+        arrivalCityCodename = vehicleData["arrivalCityCodename"] # Apelido da Cidade de Destino.
+        accountNumber = int(vehicleData["accountNumber"]) # Índice do Endereço da Carteira do Cliente na Blockchain.
 
-    # Descobrindo a Rota da Cidade de Partida para a Cidade de Destino:
-    reservationsRoute = ReservationHelper.chooseChargingStations(vehicleID, departureCityCodename, arrivalCityCodename, actualBatteryPercentage, batteryCapacity)
+        # Descobrindo a Rota da Cidade de Partida para a Cidade de Destino:
+        reservationsRoute = ReservationHelper.chooseChargingStations(vehicleID, departureCityCodename, arrivalCityCodename, actualBatteryPercentage, batteryCapacity)
 
-    # Caso Não Encontre Uma Rota:
-    if not reservationsRoute:
-        client.publish(publisherTopic, str({"error": vehicleID}))
-        print("Erro ao Encontrar Uma Rota Para os Agendamentos\n")
-        return
+        # Caso Não Encontre Uma Rota:
+        if not reservationsRoute:
+            client.publish(publisherTopic, str({"error": vehicleID}))
+            print("Erro ao Encontrar Uma Rota Para os Agendamentos\n")
+            return
 
-    # Estrutura Com Parâmetros Para Reserva:
-    data = {
-        "vehicleID": vehicleID,
-        "batteryCapacity": batteryCapacity,
-        "accountNumber": accountNumber,
-        "reservationsRoute": reservationsRoute
-    }
-
-    # Separando as Reservas de Cada Servidor:
-    ecoChargeReservationsRoute = [r for r in reservationsRoute if r.get("company") == "ecocharge"]
-    eFluxReservationsRoute = [r for r in reservationsRoute if r.get("company") == "eflux"]
-    voltPointReservationsRoute = [r for r in reservationsRoute if r.get("company") == "voltpoint"]
-
-    # Endereços dos Servidores das Empresas:
-    ECOCHARGE_RESERVATION_ADDRESS = f'http://{os.environ.get('ECOCHARGE_SERVER_IP')}:{int(os.environ.get('ECOCHARGE_SERVER_PORT'))}/reservation'
-    EFLUX_RESERVATION_ADDRESS = f'http://{os.environ.get('EFLUX_SERVER_IP')}:{int(os.environ.get('EFLUX_SERVER_PORT'))}/reservation'
-    VOLTPOINT_RESERVATION_ADDRESS = f'http://{os.environ.get('VOLTPOINT_SERVER_IP')}:{int(os.environ.get('VOLTPOINT_SERVER_PORT'))}/reservation'
-
-    # Verificando as Respostas e Tomando Decisôes:
-    success = True
-    try:
-        # Adicionando a Tarefa APENAS Se Houver Rota Para o Servidor:
-        tasks = []
-        if ecoChargeReservationsRoute:
-            data["reservationsRoute"] = ecoChargeReservationsRoute
-            tasks.append(requests.post(ECOCHARGE_RESERVATION_ADDRESS, json=data, timeout=5))
-        if eFluxReservationsRoute:
-            data["reservationsRoute"] = eFluxReservationsRoute
-            tasks.append(requests.post(EFLUX_RESERVATION_ADDRESS, json=data, timeout=5))
-        if voltPointReservationsRoute:
-            data["reservationsRoute"] = voltPointReservationsRoute
-            tasks.append(requests.post(VOLTPOINT_RESERVATION_ADDRESS, json=data, timeout=5))
-        # Analisando as Respostas dos Servidores:
-        for response_task in tasks:
-            if not response_task.ok:
-                success = False
-                break
-        # Ao Conseguir Todas As Reservas, Elas Serão Confirmadas
-        # Ao Contrário, Elas Serão Canceladas:
+        # Estrutura Com Parâmetros Para Reserva:
         data = {
             "vehicleID": vehicleID,
-            "accountNumber": accountNumber
+            "batteryCapacity": batteryCapacity,
+            "accountNumber": accountNumber,
+            "reservationsRoute": reservationsRoute
         }
-        if success:
-            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/confirm_res', json=data, timeout=5)
-            if response.ok:
-                client.publish(publisherTopic, str({"success": vehicleID}))
-                print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
+
+        # Separando as Reservas de Cada Servidor:
+        ecoChargeReservationsRoute = [r for r in reservationsRoute if r.get("company") == "ecocharge"]
+        eFluxReservationsRoute = [r for r in reservationsRoute if r.get("company") == "eflux"]
+        voltPointReservationsRoute = [r for r in reservationsRoute if r.get("company") == "voltpoint"]
+
+        # Endereços dos Servidores das Empresas:
+        ECOCHARGE_RESERVATION_ADDRESS = f'http://{os.environ.get('ECOCHARGE_SERVER_IP')}:{int(os.environ.get('ECOCHARGE_SERVER_PORT'))}/reservation'
+        EFLUX_RESERVATION_ADDRESS = f'http://{os.environ.get('EFLUX_SERVER_IP')}:{int(os.environ.get('EFLUX_SERVER_PORT'))}/reservation'
+        VOLTPOINT_RESERVATION_ADDRESS = f'http://{os.environ.get('VOLTPOINT_SERVER_IP')}:{int(os.environ.get('VOLTPOINT_SERVER_PORT'))}/reservation'
+
+        # Verificando as Respostas e Tomando Decisôes:
+        success = True
+        try:
+            # Adicionando a Tarefa APENAS Se Houver Rota Para o Servidor:
+            tasks = []
+            if ecoChargeReservationsRoute:
+                data["reservationsRoute"] = ecoChargeReservationsRoute
+                tasks.append(requests.post(ECOCHARGE_RESERVATION_ADDRESS, json=data, timeout=5))
+            if eFluxReservationsRoute:
+                data["reservationsRoute"] = eFluxReservationsRoute
+                tasks.append(requests.post(EFLUX_RESERVATION_ADDRESS, json=data, timeout=5))
+            if voltPointReservationsRoute:
+                data["reservationsRoute"] = voltPointReservationsRoute
+                tasks.append(requests.post(VOLTPOINT_RESERVATION_ADDRESS, json=data, timeout=5))
+            # Analisando as Respostas dos Servidores:
+            for response_task in tasks:
+                if not response_task.ok:
+                    success = False
+                    break
+            # Ao Conseguir Todas As Reservas, Elas Serão Confirmadas
+            # Ao Contrário, Elas Serão Canceladas:
+            data = {
+                "vehicleID": vehicleID,
+                "accountNumber": accountNumber
+            }
+            if success:
+                response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/confirm_res', json=data, timeout=5)
+                if response.ok:
+                    client.publish(publisherTopic, str({"success": vehicleID}))
+                    print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
+                else:
+                    client.publish(publisherTopic, str({"error": vehicleID}))
+                    print(f"Erro ao Confirmar as Reservas Pendentes Para o Veículo '{vehicleID}': {response.text}\n")
             else:
-                client.publish(publisherTopic, str({"error": vehicleID}))
-                print(f"Erro ao Confirmar as Reservas Pendentes Para o Veículo '{vehicleID}': {response.text}\n")
-        else:
-            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/cancel_res', json=data, timeout=5)
-            if response.ok:
-                client.publish(publisherTopic, str({"error": vehicleID}))
-                print(f"Reservas Pendentes Canceladas Para o Veículo '{vehicleID}', Pois a Requisição Atômica Não Foi Satisfeita!")
-            else:
-                client.publish(publisherTopic, str({"error": vehicleID}))
-                print(f"Alguns Servidores Retornaram Erro ao Cancelar as Reservas Pendentes Para o Veículo '{vehicleID}'!")
-    # Tratando as Exceções, Se os Servidores Não Responderem:
-    except Exception as e:
-        client.publish(publisherTopic, str({"error": vehicleID}))
-        print(f"Erro no Agendamento das Reservas Para o Veículo '{vehicleID}': {e}\n")
+                response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/cancel_res', json=data, timeout=5)
+                if response.ok:
+                    client.publish(publisherTopic, str({"error": vehicleID}))
+                    print(f"Reservas Pendentes Canceladas Para o Veículo '{vehicleID}', Pois a Requisição Atômica Não Foi Satisfeita!")
+                else:
+                    client.publish(publisherTopic, str({"error": vehicleID}))
+                    print(f"Alguns Servidores Retornaram Erro ao Cancelar as Reservas Pendentes Para o Veículo '{vehicleID}'!")
+        # Tratando as Exceções, Se os Servidores Não Responderem:
+        except Exception as e:
+            client.publish(publisherTopic, str({"error": vehicleID}))
+            print(f"Erro no Agendamento das Reservas Para o Veículo '{vehicleID}': {e}\n")
 
 # Função Para Inicializar Uma Sessão de Carregamento:
 def mqttStartCS(client, action: str, data: dict):
-    publisherTopic = findPublisherTopic(action, "vehicle")
-    if publisherTopic:
-        # Solicitando a Inicialização da Sessão de Carregamento Através da API Local:
-        try:
-            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/start_cs', json=data, timeout=5)
-            if response.ok:
-                client.publish(publisherTopic, str({"success": data["reservationID"]}))
-                print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
-            else:
-                try:
-                    errorMessage = response.json().get("error")
-                except ValueError:
-                    errorMessage = "Erro Desconhecido"
+    with lock:
+        publisherTopic = findPublisherTopic(action, "vehicle")
+        if publisherTopic:
+            # Solicitando a Inicialização da Sessão de Carregamento Através da API Local:
+            try:
+                response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/start_cs', json=data, timeout=5)
+                if response.ok:
+                    client.publish(publisherTopic, str({"success": data["reservationID"]}))
+                    print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
+                else:
+                    try:
+                        errorMessage = response.json().get("error")
+                    except ValueError:
+                        errorMessage = "Erro Desconhecido"
+                    client.publish(publisherTopic, str({"error": data["reservationID"]}))
+                    print(f"Erro na Inicialização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
+            # Tratando as Exceções, Se o Servidor Não Responder:
+            except Exception as e:
                 client.publish(publisherTopic, str({"error": data["reservationID"]}))
-                print(f"Erro na Inicialização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
-        # Tratando as Exceções, Se o Servidor Não Responder:
-        except Exception as e:
-            client.publish(publisherTopic, str({"error": data["reservationID"]}))
-            print(f"Erro na Inicialização da Sessão de Carregamento: {e}\n")
+                print(f"Erro na Inicialização da Sessão de Carregamento: {e}\n")
 
 # Função Para Finalizar Uma Sessão de Carregamento:
 def mqttFinishCS(client, action: str, data: dict):
-    publisherTopic = findPublisherTopic(action, "vehicle")
-    if publisherTopic:
-        # Solicitando a Finalização da Sessão de Carregamento Através da API Local:
-        try:
-            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/finish_cs', json=data, timeout=5)
-            if response.ok:
-                client.publish(publisherTopic, str({"success": data["reservationID"]}))
-                print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
-            else:
-                try:
-                    errorMessage = response.json().get("error")
-                except ValueError:
-                    errorMessage = "Erro Desconhecido"
+    with lock:
+        publisherTopic = findPublisherTopic(action, "vehicle")
+        if publisherTopic:
+            # Solicitando a Finalização da Sessão de Carregamento Através da API Local:
+            try:
+                response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/finish_cs', json=data, timeout=5)
+                if response.ok:
+                    client.publish(publisherTopic, str({"success": data["reservationID"]}))
+                    print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
+                else:
+                    try:
+                        errorMessage = response.json().get("error")
+                    except ValueError:
+                        errorMessage = "Erro Desconhecido"
+                    client.publish(publisherTopic, str({"error": data["reservationID"]}))
+                    print(f"Erro na Finalização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
+            # Tratando as Exceções, Se o Servidor Não Responder:
+            except Exception as e:
                 client.publish(publisherTopic, str({"error": data["reservationID"]}))
-                print(f"Erro na Finalização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
-        # Tratando as Exceções, Se o Servidor Não Responder:
-        except Exception as e:
-            client.publish(publisherTopic, str({"error": data["reservationID"]}))
-            print(f"Erro na Finalização da Sessão de Carregamento: {e}\n")
+                print(f"Erro na Finalização da Sessão de Carregamento: {e}\n")
 
 # Função "callback" ao Conectar-se ao Broker MQTT:
 def onConnect(client, userdata, flags, rc): # Assinatura Padrão da Função.
@@ -199,56 +214,68 @@ def onDisconnect(client, userdata, rc):
 
 # Função "callback" ao Receber uma Mensagem do MQTT:
 def onMessage(client, userdata, message): # Assinatura Padrão da Função.
-    # Manipulando a Mensagem:
-    decodedMessage = message.payload.decode() # Decodificando a Mensagem, Convertendo Bytes em String.
-    print("Mensagem MQTT Recebida:")
-    print(f"{decodedMessage}\n")
+    try:
+        # Manipulando a Mensagem:
+        decodedMessage = message.payload.decode() # Decodificando a Mensagem, Convertendo Bytes em String.
+        print("Mensagem MQTT Recebida:")
+        print(f"{decodedMessage}\n")
 
-    # Verificando a Existência de Json:
-    if isJson(decodedMessage):
-        jsonMessage = json.loads(decodedMessage) # Transformando a Mensagem em Dicionário.
-        print(json.dumps(jsonMessage, indent=4)) # Mensagem Identada.
-        print("\n")
+        # Verificando a Existência de Json:
+        if isJson(decodedMessage):
+            jsonMessage = json.loads(decodedMessage) # Transformando a Mensagem em Dicionário.
+            print(json.dumps(jsonMessage, indent=4)) # Mensagem Identada.
+            print("\n")
 
-    # Salvando o Tópico e Separando a Ação:
-    topic = message.topic.split("/") # Salvando as Partes do Tópico em uma Lista: ["from", "action", "to"]
-    if len(topic) == 3: # Formato de Tópico Conhecido: ["from", "action", "to"]
-        topic_action = topic[1] # Salvando a Ação do Tópico.
-    else:
-        topic_action = "unknown" # Formato de Tópico Desconhecido.
-    
-    # Tópico para Enviar os Endereços dos Contratos do Ganache:
-    if topic_action == "contracts_addresses":
-        mqttSendContractsAddresses(client, topic_action)
-    
-    # Tópico de Criação de Reservas:
-    elif topic_action == "create_reservations":
-        expectedKeys = ["vehicleID", "actualBatteryPercentage", "batteryCapacity", "departureCityCodename", "arrivalCityCodename", "accountNumber"] # Chaves Esperadas na Mensagem.
-        if all(key in jsonMessage for key in expectedKeys): # Verificando Se Todas as Chaves Estão Presentes.
-            mqttCreateReservations(client, topic_action, jsonMessage) # Passando as Informações do Veículo Para a Função.
+        # Verificando Se o Veículo Já Fez Uma Requisição, Para Evitar Duplicação:
+        now = time.time()
+        if jsonMessage["vehicleID"] in vehicleLastSeen:
+            elapsed = now - vehicleLastSeen[jsonMessage["vehicleID"]]
+            if elapsed < vehicleTimeOutSeconds:
+                print(f"Ignorando Mensagem Duplicada do Veículo '{jsonMessage["vehicleID"]}'!")
+                return
+        vehicleLastSeen[jsonMessage["vehicleID"]] = now
+
+        # Salvando o Tópico e Separando a Ação:
+        topic = message.topic.split("/") # Salvando as Partes do Tópico em uma Lista: ["from", "action", "to"]
+        if len(topic) == 3: # Formato de Tópico Conhecido: ["from", "action", "to"]
+            topic_action = topic[1] # Salvando a Ação do Tópico.
         else:
-            missingKeys = [key for key in expectedKeys if key not in jsonMessage]
-            print(f"Agendamento das Reservas Impedido, Pois Não Foram Enviadas as Seguintes Informações: {missingKeys}\n")
-    
-    # Tópico Para Iniciar uma Sessão de Carregamento:
-    # Esperado: {"reservationID", value}
-    elif topic_action == "start_charging_session":
-        if "reservationID" in jsonMessage:
-            mqttStartCS(client, topic_action, jsonMessage)
+            topic_action = "unknown" # Formato de Tópico Desconhecido.
+        
+        # Tópico para Enviar os Endereços dos Contratos do Ganache:
+        if topic_action == "contracts_addresses":
+            mqttSendContractsAddresses(client, topic_action)
+        
+        # Tópico de Criação de Reservas:
+        elif topic_action == "create_reservations":
+            expectedKeys = ["vehicleID", "actualBatteryPercentage", "batteryCapacity", "departureCityCodename", "arrivalCityCodename", "accountNumber"] # Chaves Esperadas na Mensagem.
+            if all(key in jsonMessage for key in expectedKeys): # Verificando Se Todas as Chaves Estão Presentes.
+                mqttCreateReservations(client, topic_action, jsonMessage) # Passando as Informações do Veículo Para a Função.
+            else:
+                missingKeys = [key for key in expectedKeys if key not in jsonMessage]
+                print(f"Agendamento das Reservas Impedido, Pois Não Foram Enviadas as Seguintes Informações: {missingKeys}\n")
+        
+        # Tópico Para Iniciar uma Sessão de Carregamento:
+        # Esperado: {"reservationID", value}
+        elif topic_action == "start_charging_session":
+            if "reservationID" in jsonMessage:
+                mqttStartCS(client, topic_action, jsonMessage)
+            else:
+                print(f"Inicialização da Sessão de Carregamento Impedida, Pois o ID da Reserva Não Foi Indicado!\n")
+        
+        # Tópico Para Finalizar uma Sessão de Carregamento:
+        # Esperado: {"reservationID", value}
+        elif topic_action == "end_charging_session":
+            if "reservationID" in jsonMessage:
+                mqttFinishCS(client, topic_action, jsonMessage)
+            else:
+                print(f"Finalização da Sessão de Carregamento Impedida, Pois o ID da Reserva Não Foi Indicado!\n")
+        
+        # Ação Desconhecida no Tópico:
         else:
-            print(f"Inicialização da Sessão de Carregamento Impedida, Pois o ID da Reserva Não Foi Indicado!\n")
-    
-    # Tópico Para Finalizar uma Sessão de Carregamento:
-    # Esperado: {"reservationID", value}
-    elif topic_action == "end_charging_session":
-        if "reservationID" in jsonMessage:
-            mqttFinishCS(client, topic_action, jsonMessage)
-        else:
-            print(f"Finalização da Sessão de Carregamento Impedida, Pois o ID da Reserva Não Foi Indicado!\n")
-    
-    # Ação Desconhecida no Tópico:
-    else:
-        print(f"Ação Desconhecida no Tópico: {message.topic}\n")
+            print(f"Ação Desconhecida no Tópico: {message.topic}\n")
+    except Exception as e:
+        print(f"Erro no Callback de Mensagens do MQTT: {e}\n")
 
 # Função "callback" ao Publicar uma Mensagem no MQTT:
 def onPublish(client, userdata, mid):
