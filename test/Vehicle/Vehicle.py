@@ -132,18 +132,16 @@ def on_message(client, userdata, message):
     if topic_action == "contracts_addresses":
         contracts_addresses = json.loads(decodedMessage)
         execution_step = 1  # Avança para o próximo passo
-        time.sleep(10)
+        time.sleep(2)
         mqttScheduleReservations(client)
 
     elif topic_action == "create_reservations" and execution_step == 1:
-        time.sleep(10)
+        time.sleep(2)
         depositFunds()
         execution_step = 2
-        time.sleep(10)
         mqttStartCS(client)
 
     elif topic_action == "start_charging_session" and execution_step == 2:
-        time.sleep(10)
         mqttFinishCS(client)
         execution_step = 3
 
