@@ -10,16 +10,6 @@
 				"internalType": "address",
 				"name": "_reservationLedgerAddress",
 				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "_transactionLedger",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "_escrowAddress",
-				"type": "address"
 			}
 		],
 		"stateMutability": "nonpayable",
@@ -30,9 +20,9 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			},
 			{
 				"indexed": false,
@@ -60,17 +50,17 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "chargingSessions",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			},
 			{
 				"internalType": "address",
@@ -87,24 +77,11 @@
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "escrow",
-		"outputs": [
-			{
-				"internalType": "contract Escrow",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "_reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "finishChargingSession",
@@ -115,9 +92,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "_reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "getChargingSession",
@@ -125,9 +102,9 @@
 			{
 				"components": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "reservationID",
-						"type": "uint256"
+						"type": "uint16"
 					},
 					{
 						"internalType": "address",
@@ -177,27 +154,14 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "_reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "startChargingSession",
 		"outputs": [],
 		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "transactionLedger",
-		"outputs": [
-			{
-				"internalType": "contract TransactionLedger",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
 		"type": "function"
 	}
 ]

@@ -16,35 +16,35 @@ contract ReservationLedger {
 
     // Dados da Reserva:
     struct Reservation {
-        uint256 reservationID;
-        uint256 chargingStationID;
-        uint256 chargingPointID;
+        uint16 reservationID; // 65536 IDs Possíveis, Para Economizar Recursos.
+        uint8 chargingStationID; // 256 IDs Possíveis, Para Economizar Recursos.
+        uint8 chargingPointID; // 256 IDs Possíveis, Para Economizar Recursos.
         string cityCodename;
         string companyName;
-        uint256 chargingPointPower; // Potência do Carregador em kW.
-        uint256 kWhPrice; // Em "wei", Menor Unidade de Valor do Ethereum.
-        uint256 startTimestamp;
-        uint256 finishTimestamp;
-        uint256 price; // Preço em "wei".
+        uint32 startTimestamp;
+        uint32 finishTimestamp;
+        uint72 price; // Preço em "wei", Até "100" ETH em wei (1e20).
         address payable customer; // Endereço da Carteira do Cliente, Para Pagamentos.
+        address payable recipient; // Endereço da Carteira do Servidor da Empresa do Posto.
         Status status;
     }
 
     // Mapeamentos:
-    mapping(uint256 => Reservation) public reservations;
-    mapping(address => uint256[]) private customerReservationIDs;  
+    mapping(uint16 => Reservation) public reservations; // Até 65536 Reservas Possíveis.
+    mapping(address => uint16[]) private customerReservationIDs;  // Até 65 Reservas Por Cliente Possíveis, Para 1000 Clientes.
 
     // Contadores de IDs:
-    uint256 public nextReservationID;
+    uint16 public nextReservationID;
 
     // Eventos para Notificações:
     event ReservationCreated(
-        uint256 indexed reservationID,
+        uint16 indexed reservationID,
         address customer,
+        address recipient,
         string cityCodename,
-        uint256 price
+        uint72 price
     );
-    event ReservationStatusUpdated(uint256 indexed reservationID, Status status);
+    event ReservationStatusUpdated(uint16 indexed reservationID, Status status);
 
     // Modificador:
     modifier onlyServerOrOwner() {
@@ -61,31 +61,29 @@ contract ReservationLedger {
 
     // Criando uma Nova Reserva:
     function createReservation(
-        uint256 _chargingStationID,
-        uint256 _chargingPointID,
+        uint8 _chargingStationID,
+        uint8 _chargingPointID,
         string memory _cityCodename,
         string memory _companyName,
-        uint256 _chargingPointPower,
-        uint256 _kWhPrice,
-        uint256 _startTimestamp,
-        uint256 _finishTimestamp,
-        uint256 _price,
-        address _customerAddress // Endereço da Carteira do Cliente.
+        uint32 _startTimestamp,
+        uint32 _finishTimestamp,
+        uint72 _price,
+        address _customerAddress, // Endereço da Carteira do Cliente.
+        address _companyAddress // Endereço da Carteira do Servidor da Empresa.
     ) public onlyServerOrOwner {
         // Criando a Reserva:
-        uint256 newReservationID = nextReservationID;
+        uint16 newReservationID = nextReservationID;
         reservations[newReservationID] = Reservation({
             reservationID: newReservationID,
             chargingStationID: _chargingStationID,
             chargingPointID: _chargingPointID,
             cityCodename: _cityCodename,
             companyName: _companyName,
-            chargingPointPower: _chargingPointPower,
-            kWhPrice: _kWhPrice,
             startTimestamp: _startTimestamp,
             finishTimestamp: _finishTimestamp,
             price: _price,
             customer: payable(_customerAddress),
+            recipient: payable(_companyAddress),
             status: Status.PENDING
         });
 
@@ -99,13 +97,14 @@ contract ReservationLedger {
         emit ReservationCreated(
             newReservationID,
             _customerAddress,
+            _companyAddress,
             _cityCodename,
             _price
         );
     }
 
     // Confirmando uma Reserva:
-    function confirmReservation(uint256 _reservationID) public onlyServerOrOwner {
+    function confirmReservation(uint16 _reservationID) public onlyServerOrOwner {
         // Verificando o Estado da Reserva:
         require(reservations[_reservationID].reservationID != 0, "ID da Reserva Invalido!");
         require(reservations[_reservationID].status != Status.CANCELLED, "Nao e Possivel Confirmar uma Reserva Cancelada!");
@@ -119,8 +118,8 @@ contract ReservationLedger {
     }
 
     // Marcando uma Reserva Como Paga:
-    // A Função Será Usada Após a Gravação de Um Transação.
-    function markReservationAsPayed(uint256 _reservationID) public onlyServerOrOwner {
+    // A Função Será Usada Após a Gravação de Um Escrow de Pagamento.
+    function markReservationAsPaid(uint16 _reservationID) public onlyServerOrOwner {
         // Verificando o Estado da Reserva:
         require(reservations[_reservationID].reservationID != 0, "ID da Reserva Invalido!");
         require(reservations[_reservationID].status != Status.CANCELLED, "Nao e Possivel Marcar uma Reserva Cancelada Como Paga!");
@@ -134,7 +133,7 @@ contract ReservationLedger {
     }
 
     // Cancelando uma Reserva Existente:
-    function cancelReservation(uint256 _reservationID) public onlyServerOrOwner {
+    function cancelReservation(uint16 _reservationID) public onlyServerOrOwner {
         // Verificando o Estado da Reserva:
         require(reservations[_reservationID].reservationID != 0, "ID da Reserva Invalido!");
         require(reservations[_reservationID].status != Status.CANCELLED, "Nao e Possivel Cancelar uma Reserva Ja Cancelada!");
@@ -149,7 +148,7 @@ contract ReservationLedger {
     }
 
     // Função para Auditar uma Reserva:
-    function getReservation(uint256 _reservationID) public view returns (Reservation memory) {
+    function getReservation(uint16 _reservationID) public view returns (Reservation memory) {
         require(reservations[_reservationID].reservationID != 0, "ID da Reserva Invalido!");
         return reservations[_reservationID];
     }
@@ -158,9 +157,10 @@ contract ReservationLedger {
     function getReservationsByCustomer(address _customerAddress) public view returns (Reservation[] memory){
         // Verificando o Endereço:
         require(_customerAddress != address(0), "Endereco do Usuario Invalido!");
+        require(customerReservationIDs[_customerAddress].length > 0, "Usuario Sem Reservas Registradas!");
         
         // Obtendo Todas os IDs de Reserva Associadas a Este Cliente:
-        uint256[] storage customerIDs = customerReservationIDs[_customerAddress];
+        uint16[] storage customerIDs = customerReservationIDs[_customerAddress];
         
         // Criando um Array em Memória para Armazenar as Structs de Reserva Completas:
         Reservation[] memory customerResList = new Reservation[](customerIDs.length);
@@ -176,7 +176,7 @@ contract ReservationLedger {
     // Auditando Todas as Reservas do Contrato:
     function getAllReservations() public view returns (Reservation[] memory) {
         Reservation[] memory allResList = new Reservation[](nextReservationID - 1);
-        for (uint256 i = 1; i < nextReservationID; i++) {
+        for (uint16 i = 1; i < nextReservationID; i++) {
             allResList[i - 1] = reservations[i];
         }
         return allResList;

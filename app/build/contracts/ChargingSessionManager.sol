@@ -4,64 +4,54 @@ pragma solidity >=0.8.2 <0.9.0;
 // Importando as Dependências dos Outros Contratos:
 import "./AuthorizedServers.sol";
 import "./ReservationLedger.sol";
-import "./TransactionLedger.sol";
-import "./Escrow.sol";
 
 contract ChargingSessionManager {
     // O Deployer do Contrato, Administrador:
     address public owner;
 
-    // Referência aos Contratos "AuthorizedServers", "ReservationLedger" e "Escrow":
+    // Referência aos Contratos "AuthorizedServers" e "ReservationLedger":
     AuthorizedServers public authorizedServers;
     ReservationLedger public reservationLedger;
-    TransactionLedger public transactionLedger;
-    Escrow public escrow;
 
     // Status da Sessão de Recarga:
     enum SessionStatus {IDLE, IN_PROGRESS, FINISHED}
 
     // Dados da Sessão de Recarga:
     struct ChargingSession {
-        uint256 reservationID;
+        uint16 reservationID;
         address customer;
         SessionStatus status;
     }
 
     // Mapeamento:
-    mapping(uint256 => ChargingSession) public chargingSessions;
+    mapping(uint16 => ChargingSession) public chargingSessions; // Até 65536 Sessões de Carregamento Possíveis.
 
     // Evento para Notificação:
-    event SessionStatusUpdated(uint256 indexed reservationID, SessionStatus status);
+    event SessionStatusUpdated(uint16 indexed reservationID, SessionStatus status);
 
-    // Modificadores:
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Apenas o Administrador Pode Executar Esta Acao!");
-        _;
-    }
+    // Modificador:
     modifier onlyServerOrOwner() {
         require(authorizedServers.isAuthorizedRechargingServer(msg.sender) || msg.sender == owner, "Apenas um Dos Servidores de Carregamento ou Administrador Pode Executar Esta Acao!");
         _;
     }
 
     // Construtor:
-    constructor(address _authorizedServersAddress, address _reservationLedgerAddress, address _transactionLedger, address _escrowAddress) {
+    constructor(address _authorizedServersAddress, address _reservationLedgerAddress) {
         owner = msg.sender;
         authorizedServers = AuthorizedServers(_authorizedServersAddress);
         reservationLedger = ReservationLedger(_reservationLedgerAddress);
-        transactionLedger = TransactionLedger(_transactionLedger);
-        escrow = Escrow(_escrowAddress);
     }
 
-    // Iniciando uma Sessão de Recarga Para Uma Reserva Confirmada:
+    // Iniciando uma Sessão de Recarga Para Uma Reserva Paga:
     function startChargingSession(
-        uint256 _reservationID
+        uint16 _reservationID
     ) public onlyServerOrOwner {
-        // Verificando as Informações da Reserva:
-        require(reservationLedger.getReservation(_reservationID).reservationID != 0, "ID da Reserva Invalido!");
-        require(reservationLedger.getReservation(_reservationID).status == ReservationLedger.Status.CONFIRMED, "A Reserva Nao Esta Confirmada!");
+        // Recuperando os Dados da Reserva:
+        ReservationLedger.Reservation memory rs = reservationLedger.getReservation(_reservationID);
 
-        // Verificando o Depósito dos Fundos no Escrow:
-        require(escrow.getEscrowPaymentStatus(_reservationID).paidToEscrow, "Os Fundos Nao Foram Depositados Para Esta Reserva!");
+        // Verificando as Informações da Reserva e Pagamento:
+        require(rs.reservationID != 0, "ID da Reserva Invalido!");
+        require(rs.status == ReservationLedger.Status.PAYED, "Os Fundos Nao Foram Depositados Para Esta Reserva!");
         
         // Verificando as Informações da Sessão de Recarga da Reserva:
         require(chargingSessions[_reservationID].reservationID == 0, "Sessao de Recarga Ja Iniciada Para Esta Reserva!");
@@ -69,18 +59,18 @@ contract ChargingSessionManager {
         // Criando a Nova Sessão de Recarga:
         chargingSessions[_reservationID] = ChargingSession({
             reservationID: _reservationID,
-            customer: reservationLedger.getReservation(_reservationID).customer,
+            customer: rs.customer,
             status: SessionStatus.IN_PROGRESS
         });
 
         // Emitindo uma Notificação:
-        emit SessionStatusUpdated(chargingSessions[_reservationID].reservationID, SessionStatus.IN_PROGRESS);
+        emit SessionStatusUpdated(_reservationID, SessionStatus.IN_PROGRESS);
     }
 
-    // Finalizando uma Sessão de Recarga e Liberando o Fundos de Pagamento:
+    // Finalizando uma Sessão de Recarga:
     function finishChargingSession(
-        uint256 _reservationID
-    ) public onlyOwner {
+        uint16 _reservationID
+    ) public onlyServerOrOwner {
         // Verificando as Informações da Recarga:
         ChargingSession storage session = chargingSessions[_reservationID];
         require(session.reservationID != 0, "Sessao de Recarga Nao Encontrada Para Esta Reserva!");
@@ -89,22 +79,12 @@ contract ChargingSessionManager {
         // Atualizando o Status da Sessão de Recarga:
         session.status = SessionStatus.FINISHED;
 
-        // Registrando a Transação da Reserva no "ReservationLedger":
-        transactionLedger.recordTransaction(
-            _reservationID,
-            escrow.getEscrowPaymentStatus(_reservationID).payer, // Endereço da Carteira do Cliente.
-            true // Status de Pagamento.
-        );
-
-        // Liberando os Fundos de Pagamento Para o Servidor:
-        escrow.releaseFunds(_reservationID);
-
         // Emitindo uma Notificação:
-        emit SessionStatusUpdated(session.reservationID, SessionStatus.FINISHED);
+        emit SessionStatusUpdated(_reservationID, SessionStatus.FINISHED);
     }
 
     // Auditando os Detalhes de Uma Sessão de Recarga:
-    function getChargingSession(uint256 _reservationID) public view returns (ChargingSession memory) {
+    function getChargingSession(uint16 _reservationID) public view returns (ChargingSession memory) {
         require(chargingSessions[_reservationID].reservationID != 0, "Sessao de Recarga Nao Encontrada!");
         return chargingSessions[_reservationID];
     }

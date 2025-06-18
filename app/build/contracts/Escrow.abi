@@ -10,6 +10,11 @@
 				"internalType": "address",
 				"name": "_reservationLedgerAddress",
 				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_chargingSessionManagerAddress",
+				"type": "address"
 			}
 		],
 		"stateMutability": "nonpayable",
@@ -20,9 +25,9 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			},
 			{
 				"indexed": false,
@@ -38,9 +43,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "uint256",
+				"internalType": "uint72",
 				"name": "amount",
-				"type": "uint256"
+				"type": "uint72"
 			}
 		],
 		"name": "EscrowInitialized",
@@ -51,9 +56,9 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			},
 			{
 				"indexed": true,
@@ -63,9 +68,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "uint256",
+				"internalType": "uint72",
 				"name": "amount",
-				"type": "uint256"
+				"type": "uint72"
 			}
 		],
 		"name": "FundsDeposited",
@@ -76,9 +81,9 @@
 		"inputs": [
 			{
 				"indexed": true,
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			},
 			{
 				"indexed": true,
@@ -88,9 +93,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "uint256",
+				"internalType": "uint72",
 				"name": "amount",
-				"type": "uint256"
+				"type": "uint72"
 			}
 		],
 		"name": "FundsReleased",
@@ -110,11 +115,24 @@
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "chargingSessionManager",
+		"outputs": [
+			{
+				"internalType": "contract ChargingSessionManager",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "_reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "depositFunds",
@@ -125,9 +143,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "escrowPayments",
@@ -143,9 +161,9 @@
 				"type": "address"
 			},
 			{
-				"internalType": "uint256",
+				"internalType": "uint72",
 				"name": "amount",
-				"type": "uint256"
+				"type": "uint72"
 			},
 			{
 				"internalType": "bool",
@@ -156,6 +174,11 @@
 				"internalType": "bool",
 				"name": "released",
 				"type": "bool"
+			},
+			{
+				"internalType": "uint32",
+				"name": "paymentTimestamp",
+				"type": "uint32"
 			}
 		],
 		"stateMutability": "view",
@@ -164,9 +187,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "_reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "getEscrowPaymentStatus",
@@ -184,9 +207,9 @@
 						"type": "address"
 					},
 					{
-						"internalType": "uint256",
+						"internalType": "uint72",
 						"name": "amount",
-						"type": "uint256"
+						"type": "uint72"
 					},
 					{
 						"internalType": "bool",
@@ -197,6 +220,11 @@
 						"internalType": "bool",
 						"name": "released",
 						"type": "bool"
+					},
+					{
+						"internalType": "uint32",
+						"name": "paymentTimestamp",
+						"type": "uint32"
 					}
 				],
 				"internalType": "struct Escrow.EscrowPayment",
@@ -210,24 +238,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "_reservationID",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address payable",
-				"name": "_payer",
-				"type": "address"
-			},
-			{
-				"internalType": "address payable",
-				"name": "_recipient",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_amount",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "initializeEscrow",
@@ -251,9 +264,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "uint16",
 				"name": "_reservationID",
-				"type": "uint256"
+				"type": "uint16"
 			}
 		],
 		"name": "releaseFunds",
