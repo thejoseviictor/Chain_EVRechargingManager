@@ -112,16 +112,19 @@ def depositFunds():
     # Exibindo Mensagem de Sucesso:
     print(f"{len(reservationsList)} Reservas Recuperadas da Blockchain Para Memória de Trabalho.\n")
     for reservation in reservationsList:
-        print(f"Depositando o Pagamento Para a Reserva '{reservation["reservationID"]}'!\n")
-        tx_hash = escrow_contract.functions.depositFunds(reservation["reservationID"]).transact({
-            'from': vehicle_account, # Endereço do Carro
-            'value': reservation["price"], # Preço em "wei", Presente nas Informações da Reserva
-            "nonce": w3.eth.get_transaction_count(vehicle_account),
-            'gasPrice': w3.eth.gas_price,
-            "gas": 125000,
-            "chainId": w3.eth.chain_id
-        })
-        w3.eth.wait_for_transaction_receipt(tx_hash)
+        if int(reservation["status"]) == 1: # 0 - PENDING, 1 - CONFIRMED, 2 - PAYED, 3 - CANCELLED.
+            print(f"Depositando o Pagamento Para a Reserva '{reservation["reservationID"]}'!\n")
+            tx_hash = escrow_contract.functions.depositFunds(reservation["reservationID"]).transact({
+                'from': vehicle_account, # Endereço do Carro
+                'value': reservation["price"], # Preço em "wei", Presente nas Informações da Reserva
+                "nonce": w3.eth.get_transaction_count(vehicle_account),
+                'gasPrice': w3.eth.gas_price,
+                "gas": 125000,
+                "chainId": w3.eth.chain_id
+            })
+            w3.eth.wait_for_transaction_receipt(tx_hash)
+        else:
+            print(f"Os Fundos de Pagamento da Reserva '{reservation["reservationID"]}' Já Foram Depositados!\n")
 
 def mqttStartCS(client):
     for rs in reservationsList:
