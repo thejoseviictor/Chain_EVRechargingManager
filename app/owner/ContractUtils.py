@@ -21,6 +21,9 @@ def getContractData(contract_name: str):
 
 # Implementando um Contrato e Retornando o Seu Endereço:
 def deployContract(w3: Web3, deployer_account, contract_name: str, *args):
+    # Verificando os Dados:
+    assert Web3.is_address(deployer_account), "Endereço da Conta do Deployer Inválido!\n"
+
     # Recuperando os Arquivos Compilados:
     abi, bytecode = getContractData(contract_name)
 
@@ -55,6 +58,10 @@ def deployContract(w3: Web3, deployer_account, contract_name: str, *args):
 
 # Autorizando o Servidor de Uma Empresa na Blockchain:
 def authorizeServer(w3: Web3, contract, deployer_account, server_account):
+    # Verificando os Dados:
+    assert Web3.is_address(deployer_account), "Endereço da Conta do Deployer Inválido!\n"
+    assert Web3.is_address(server_account), "Endereço da Conta do Servidor/Contrato Inválido!\n"
+    # Enviando os Dados:
     try:
         print(f"Autorizando o Servidor: {server_account}\n")
         tx_hash = contract.functions.authorizeRechargingServer(server_account).transact({
@@ -72,6 +79,9 @@ def authorizeServer(w3: Web3, contract, deployer_account, server_account):
 
 # Liberando os Fundos de Pagamento de Uma Reserva no Escrow:
 def releaseFunds(w3: Web3, contract, deployer_account, reservationID: int):
+    # Verificando os Dados:
+    assert Web3.is_address(deployer_account), "Endereço da Conta do Deployer Inválido!\n"
+    # Enviando os Dados:
     try:
         print(f"Liberando os Fundos de Pagamento da Reserva: {reservationID}\n")
         tx_hash = contract.functions.releaseFunds(reservationID).transact({
@@ -83,7 +93,8 @@ def releaseFunds(w3: Web3, contract, deployer_account, reservationID: int):
         })
         w3.eth.wait_for_transaction_receipt(tx_hash)
         escrow = contract.functions.getEscrowPaymentStatus(reservationID).call()
-        released = escrow[4] # Se o Valor Foi Liberado Para o Recebedor.
+        # Verificando Se o Valor Foi Liberado Para o Recebedor:
+        released = escrow[4]
         if released:
             print(f"Fundos de Pagamento da Reserva '{reservationID}' Liberados Com Sucesso!\n")
             return True
