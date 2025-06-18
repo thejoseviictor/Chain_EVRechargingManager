@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Serviço do Ganache:
   ganache:
-    image: trufflesuite/ganache:latest
+    image: trufflesuite/ganache:v7.9.2
     container_name: ganache
     ports:
       - "8545:8545"
