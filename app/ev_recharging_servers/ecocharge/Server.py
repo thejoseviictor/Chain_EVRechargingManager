@@ -100,7 +100,7 @@ def createReservations():
                         if not rs_status:
                             print(f"Não Foi Possível Realizar a Reserva em '{city["name"]}' Para o Veículo '{vehicleID}'\n")
                             return jsonify({"error": f"Não Foi Possível Realizar a Reserva em '{city["name"]}' Para o Veículo '{vehicleID}"}), 404 # Erro 404: Not Found
-                        lastReservationDuration = currentReservation["duration"] # Salvando a Duração Desta Reserva.
+                        lastReservationDuration = currentReservation["durationHours"] # Salvando a Duração Desta Reserva.
     # Retorno de Sucesso:
     return f"Sucesso ao Realizas as Reservas do Veículo '{vehicleID}'", 200
 
