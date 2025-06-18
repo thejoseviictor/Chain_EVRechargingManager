@@ -5,7 +5,7 @@ import os
 from flask import Flask, request, jsonify
 from web3 import Web3
 import time
-from ContractUtils import deployContract, authorizeServer, finishChargingSession
+from ContractUtils import deployContract, authorizeServer, releaseFunds
 
 # Criando a Aplicação Flask:
 app = Flask(__name__)
@@ -62,42 +62,41 @@ def setupBlockchain():
     # Implementando e Recebendo os Endereços dos Contratos:
     as_contract = deployContract(w3, owner_account, "AuthorizedServers") # Servidores Autorizados.
     rl_contract = deployContract(w3, owner_account, "ReservationLedger", as_contract.address) # Reservas.
-    tl_contract = deployContract(w3, owner_account, "TransactionLedger", as_contract.address, rl_contract.address) # Transações.
-    escrow_contract = deployContract(w3, owner_account, "Escrow", as_contract.address, rl_contract.address) # Escrow de Pagamento.
-    csm_contract = deployContract(w3, owner_account, "ChargingSessionManager", as_contract.address, rl_contract.address, tl_contract.address, escrow_contract.address) # Sessão de Carregamento.
+    csm_contract = deployContract(w3, owner_account, "ChargingSessionManager", as_contract.address, rl_contract.address) # Sessão de Carregamento.
+    escrow_contract = deployContract(w3, owner_account, "Escrow", as_contract.address, rl_contract.address, csm_contract.address) # Escrow de Pagamento.
 
     # Salvando os Endereços dos Contratos em Um Dicionário Para Enviar aos Servidores das Empresas:
     contracts_addresses = {
         "ReservationLedger": rl_contract.address,
-        "TransactionLedger": tl_contract.address,
-        "Escrow": escrow_contract.address,
-        "ChargingSessionManager": csm_contract.address
+        "ChargingSessionManager": csm_contract.address,
+        "Escrow": escrow_contract.address
     }
 
     # Autorizando os Servidores das Empresas no Contrato "AuthorizedServers":
     authorizeServer(w3, as_contract, owner_account, ecocharge_account)
     authorizeServer(w3, as_contract, owner_account, eflux_account)
     authorizeServer(w3, as_contract, owner_account, voltpoint_account)
+    authorizeServer(w3, as_contract, owner_account, escrow_contract.address) # Autorizando o Contrato "Escrow", Para Chamada De "markReservationAsPaid".
 
-    # Armazenando o Contrato da Sessão de Carregamento Para Uso na Rota "/finish_cs":
-    app.config["CSM_CONTRACT"] = csm_contract
+    # Armazenando o Contrato de Escrow de Pagamento Para Uso na Rota "/release_funds":
+    app.config["ESCROW_CONTRACT"] = escrow_contract
 
 # Rota Para Enviar os Endereços dos Contratos Deployados:
 @app.route('/contracts', methods=['GET'])
 def getContractsAddresses():
     return jsonify(contracts_addresses), 200
 
-# Rota Para Finalizar uma Sessão de Carregamento e Liberar os Fundos do Pagamento ao Servidor Que Prestou o Serviço:
-@app.route('/finish_cs', methods=['POST'])
-def finishCS():
+# Rota Para Liberar os Fundos do Pagamento ao Servidor Que Prestou o Serviço:
+@app.route('/release_funds', methods=['POST'])
+def releaseFundsToCompany():
     # Tratando os Dados Recebidos:
     data = request.json # Recebendo os Dados em um Dicionário: data = {reservationID: int}.
     reservationID = data.get('reservationID') # ID da Reserva.
-    # Solicitando a Finalização da Sessão de Carregamento na Blockchain:
-    finished = finishChargingSession(w3, app.config["CSM_CONTRACT"], owner_account, reservationID)
+    # Solicitando a Liberação dos Fundos de Pagamento na Blockchain:
+    released = releaseFunds(w3, app.config["ESCROW_CONTRACT"], owner_account, reservationID)
     # Retornando:
-    if finished:
-        return f"Sucesso ao Finalizar a Sessão de Carregamento da Reserva '{reservationID}'", 200
+    if released:
+        return f"Sucesso ao Liberar os Fundos de Pagamento da Reserva '{reservationID}'", 200
     else:
         return jsonify({"error": "Erro Genérico!"}), 500
 

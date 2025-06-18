@@ -32,7 +32,7 @@ def deployContract(w3: Web3, deployer_account, contract_name: str, *args):
             "from": deployer_account,
             "nonce": w3.eth.get_transaction_count(deployer_account),
             "gasPrice": w3.eth.gas_price,
-            "gas": 3000000,
+            "gas": 3600000,
             "chainId": w3.eth.chain_id,
     })
     
@@ -61,7 +61,7 @@ def authorizeServer(w3: Web3, contract, deployer_account, server_account):
             'from': deployer_account,
             "nonce": w3.eth.get_transaction_count(deployer_account),
             'gasPrice': w3.eth.gas_price,
-            "gas": 3000000,
+            "gas": 57000,
             "chainId": w3.eth.chain_id
         })
         w3.eth.wait_for_transaction_receipt(tx_hash)
@@ -70,26 +70,26 @@ def authorizeServer(w3: Web3, contract, deployer_account, server_account):
     except Exception as e:
         print(f"Erro ao Autorizar o Servidor '{server_account}': '{e}'\n")
 
-# Finalizando Uma Sessão de Carregamento e Liberando os Fundos de Pagamento:
-def finishChargingSession(w3: Web3, contract, deployer_account, reservationID: int):
+# Liberando os Fundos de Pagamento de Uma Reserva no Escrow:
+def releaseFunds(w3: Web3, contract, deployer_account, reservationID: int):
     try:
-        print(f"Finalizando a Sessão de Carregamento da Reserva: {reservationID}\n")
-        tx_hash = contract.functions.finishChargingSession(reservationID).transact({
+        print(f"Liberando os Fundos de Pagamento da Reserva: {reservationID}\n")
+        tx_hash = contract.functions.releaseFunds(reservationID).transact({
             'from': deployer_account,
             "nonce": w3.eth.get_transaction_count(deployer_account),
             'gasPrice': w3.eth.gas_price,
-            "gas": 3000000,
+            "gas": 58000,
             "chainId": w3.eth.chain_id
         })
         w3.eth.wait_for_transaction_receipt(tx_hash)
-        cs = contract.functions.getChargingSession(reservationID).call()
-        cs_status = cs[2] # 0 = IDLE, 1 = IN_PROGRESS, 2 = FINISHED.
-        if cs_status == 2:
-            print(f"Sessão de Carregamento da Reserva '{reservationID}' Finalizada Com Sucesso!\n")
+        escrow = contract.functions.getEscrowPaymentStatus(reservationID).call()
+        released = escrow[4] # Se o Valor Foi Liberado Para o Recebedor.
+        if released:
+            print(f"Fundos de Pagamento da Reserva '{reservationID}' Liberados Com Sucesso!\n")
             return True
         else:
-            print(f"Falha ao Finalizar a Sessão de Carregamento da Reserva '{reservationID}'!\n")
+            print(f"Falha ao Liberar os Fundos de Pagamento da Reserva da Reserva '{reservationID}'!\n")
             return None
     except Exception as e:
-        print(f"Erro ao Finalizar a Sessão de Carregamento da Reserva '{reservationID}': {e}\n")
+        print(f"Erro ao Liberar os Fundos de Pagamento da Reserva da Reserva '{reservationID}': {e}\n")
         return None
