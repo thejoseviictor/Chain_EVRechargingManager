@@ -63,13 +63,12 @@ class ReservationsManager:
                 "chargingPointID": res[2],
                 "cityCodename": res[3],
                 "companyName": res[4],
-                "chargingPointPower": res[5],
-                "kWhPrice": res[6],
-                "startTimestamp": datetime.datetime.fromtimestamp(res[7]).isoformat(),
-                "finishTimestamp": datetime.datetime.fromtimestamp(res[8]).isoformat(),
-                "price": res[9],
-                "customer": res[10],
-                "status": res[11]
+                "startTimestamp": datetime.datetime.fromtimestamp(res[5]).isoformat(),
+                "finishTimestamp": datetime.datetime.fromtimestamp(res[6]).isoformat(),
+                "price": res[7],
+                "customer": res[8],
+                "recipient": res[9],
+                "status": res[10]
             }
             self.reservationsList.append(res_dict)
         # Exibindo Mensagem de Sucesso:
@@ -106,7 +105,7 @@ class ReservationsManager:
     
     # Retornando um Dicionário Com a Estrutura da Reserva Formatado Para Envio Para Blockchain:
     def createReservation(self, chargingStationID: int, chargingPointID: int, cityCodename: str, companyName: str,
-                          actualBatteryPercentage: int, batteryCapacity: float, timeToReach: float, customerAddress: hex):
+                          actualBatteryPercentage: int, batteryCapacity: float, timeToReach: float, customerAddress):
         self.getReservationsOnBlockchain(self.rl_contract) # Recuperando os Dados da Blockchain.
         # Buscando Informações do Ponto de Carregamento Selecionado:
         cp = ChargingPointsFile() # cp = Charging Point.
@@ -128,8 +127,7 @@ class ReservationsManager:
                 "chargingPointID": int(reservationObj.chargingPointID),
                 "cityCodename": str(reservationObj.cityCodename),
                 "companyName": str(reservationObj.companyName),
-                "chargingPointPower": int(reservationObj.chargingPointPower),
-                "kWhPrice": int(Web3.to_wei(reservationObj.kWhPrice, 'ether')),
+                "durationHours": reservationObj.durationHours,
                 "startTimestamp": int(datetime.datetime.fromisoformat(reservationObj.startDateISO).timestamp()),
                 "finishTimestamp": int(datetime.datetime.fromisoformat(reservationObj.finishDateISO).timestamp()),
                 "price": int(Web3.to_wei(reservationObj.price, 'ether')),
