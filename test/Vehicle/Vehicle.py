@@ -44,7 +44,7 @@ while True:
         time.sleep(3) # Tempo de Espera Para Tentar uma Nova Conexão.
 
 def mqttReceiveContractsAddresses(client):
-    client.publish("vehicle/contracts_addresses/server", "OK")
+    client.publish("vehicle/contracts_addresses/server", str("OK"))
 
 def mqttScheduleReservations(client):
     data = {
@@ -112,10 +112,6 @@ def on_connect(client, userdata, flags, rc):
         for topic in MQTT_TOPICS_SUBSCRIBER:
             client.subscribe(topic)
         mqttReceiveContractsAddresses(client)
-        mqttScheduleReservations(client)
-        depositFunds()
-        mqttStartCS(client)
-        mqttFinishCS(client)
     else:
         print(f"Falha na Conexão! Código de Retorno: {rc}\n")
 
@@ -132,6 +128,10 @@ def on_message(client, userdata, message):
         topic_action = "unknown" # Formato de Tópico Desconhecido.
     if topic_action == "contracts_addresses":
         contracts_addresses = json.loads(decodedMessage)
+    mqttScheduleReservations(client)
+    depositFunds()
+    mqttStartCS(client)
+    mqttFinishCS(client)
 
 def on_publish(client, userdata, mid):
     print("Mensagem Publicada Com Sucesso!\n")
