@@ -107,7 +107,7 @@ def chooseChargingPoint(chargingStationID: int, rl_contract):
                 latestDate = None # Usado Para Comparar Com as Datas de Finalização das Reservas.
                 # Percorrendo a Lista de Reservas:
                 for rs in reservations:
-                    endTime = datetime.datetime.fromisoformat(rs["finishDateTime"]) # Salvando a Data de Finalização em Formato DateTime.
+                    endTime = datetime.datetime.fromisoformat(rs["finishTimestamp"]) # Salvando a Data de Finalização em Formato DateTime.
                     if latestDate is None or endTime < latestDate: # Comparando a Data de Finalização da Reserva Atual Com a Mais Recente Até o Momento.
                         latestDate = endTime # Salvando a Data, Se For Mais Recente.
                         latestFinishingReservation = rs # Salvando a Célula da Reserva.
