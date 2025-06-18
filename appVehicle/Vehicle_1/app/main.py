@@ -220,6 +220,8 @@ while(repeat):
 
     while wrongActions :
 
+        contract_reservation_ledger = contracts_addresses["ReservationLedger"] # Definindo endereço do contrato ReservationLedger
+
         print(" O que deseja fazer? \n")
         reply = input(" Digite: \n\t 1. Fazer reserva \n\t 2. Ver histórico de reservas \n\t 3. Ver informações de conta/veículo \n\t 4. Adicionar crédito \n\t 5. Voltar para o início \n\t 6. Sair do programa \n\t -> ")
         utility.clearTerminal()
@@ -239,8 +241,6 @@ while(repeat):
         '''
 
         if reply == "1" : # Opção 1: Realizar reserva
-
-            contract_reservation_ledger = contracts_addresses["ReservationLedger"]
 
             wrongCities = True
 
