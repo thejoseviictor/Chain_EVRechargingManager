@@ -130,7 +130,7 @@ class ReservationsManager:
                 "durationHours": reservationObj.durationHours,
                 "startTimestamp": int(datetime.datetime.fromisoformat(reservationObj.startDateISO).timestamp()),
                 "finishTimestamp": int(datetime.datetime.fromisoformat(reservationObj.finishDateISO).timestamp()),
-                "price": int(Web3.to_wei(reservationObj.price, 'ether')),
+                "price": int(reservationObj.price, 'ether'),
                 "customerAddress": str(customerAddress)
             })
             
