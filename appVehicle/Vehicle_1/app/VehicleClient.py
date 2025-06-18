@@ -52,13 +52,13 @@ class VehicleClient:
         if rc == 0:
             print(f" \t Conexão estabelecida ! ")
             
-            if self.type_subscribe == 1 :
+            if self.type_subscribe == '1' :
             
                 self.client.subscribe("server/contracts_addresses/vehicle") # Realiza a inscrição para receber os endereços de contrato
 
                 self.client.publish("vehicle/contracts_addresses/server" , "OK")
 
-            elif self.type_subscribe == 2 :
+            elif self.type_subscribe == '2' :
                 
                 self.client.subscribe("server/create_reservations/vehicle") # Realiza a inscrição para receber resposta de reservas efetuadas ou não
 
@@ -66,11 +66,11 @@ class VehicleClient:
                 self.client.publish("vehicle/create_reservations/server", json.dumps(self.vData))
 
 
-            elif self.type_subscribe == 3 :
+            elif self.type_subscribe == '3' :
                 self.client.subscribe("server/start_charging_session/vehicle")
                 self.client.publish("vehicle/start_charging_session/server", self.ID_reservation)
             
-            elif self.type_subscribe == 4 :
+            elif self.type_subscribe == '4' :
                 self.client.subscribe("server/end_charging_session/vehicle")
                 self.client.publish("vehicle/end_charging_session/server",self.ID_reservation)
 
@@ -82,16 +82,17 @@ class VehicleClient:
 
 
     # Método on_message: Trata a mensagem recebida pelo(s) servidor(es)
-    def on_message(self, client, userdata, msg):
+    def on_message(self, client, userdata, message):
 
-        rMessage = msg.payload.decode()
+        rMessage = message.payload.decode()
+        
 
-        if self.type_subscribe == 1:
+        if self.type_subscribe == '1':
             global contract_address # Variavel global utilizada para obter o endereço de contrato
             contract_address = rMessage
 
 
-        elif self.type_subscribe == 2:
+        elif self.type_subscribe == '2':
 
             print("IDs de reserva recebidas: \n")
             
@@ -106,7 +107,7 @@ class VehicleClient:
             #json.loads(rMessage)
 
 
-        elif self.type_subscribe == 3:
+        elif self.type_subscribe == '3':
             
             key = rMessage.keys()[0]
 
@@ -120,7 +121,7 @@ class VehicleClient:
                 print('rMessage')
 
 
-        elif self.type_subscribe == 4:
+        elif self.type_subscribe == '4':
             
             key = rMessage.keys()[0]
 
