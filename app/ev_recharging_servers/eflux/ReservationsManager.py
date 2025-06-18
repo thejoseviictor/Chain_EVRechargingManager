@@ -92,7 +92,7 @@ class ReservationsManager:
         # Percorrendo a Lista de Reservas:
         for reservation in self.reservationsList:
             if reservation["chargingStationID"] == chargingStationID and reservation["chargingPointID"] == chargingPointID :
-                dateTimeInFile = datetime.datetime.fromisoformat(reservation["finishDateISO"]) # Decodificando a Data na Lista para DateTime.
+                dateTimeInFile = datetime.datetime.fromisoformat(reservation["finishTimestamp"]) # Decodificando a Data na Lista para DateTime.
                 # Salvando, Se a Data na Lista For Posterior:
                 if lastDateTime < dateTimeInFile:
                     found = True # Alterando o Status de Data Posterior Encontrada.
