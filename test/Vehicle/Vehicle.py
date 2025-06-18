@@ -125,6 +125,7 @@ def depositFunds():
 
 def mqttStartCS(client):
     for rs in reservationsList:
+        print(f"Iniciando a Sessão de Carregamento da Reserva '{rs["reservationID"]}':\n")
         data = {
             "reservationID": rs["reservationID"],
         }
@@ -132,6 +133,7 @@ def mqttStartCS(client):
 
 def mqttFinishCS(client):
     for rs in reservationsList:
+        print(f"Finalizando a Sessão de Carregamento da Reserva '{rs["reservationID"]}':\n")
         data = {
             "reservationID": rs["reservationID"],
         }
