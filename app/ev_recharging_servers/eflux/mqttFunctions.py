@@ -6,8 +6,6 @@ import json # Para Printar os Erros.
 import requests # Para Comunicação com Outros Servidores.
 import paho.mqtt.client as mqtt # Funções do MQTT.
 from Server import SERVER_IP, SERVER_PORT, contracts_addresses
-from Utils import handleHTTPExceptions # Exceções Para Problemas de Conexão.
-from ContractUtils import OWNER_IP, OWNER_PORT
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
 
 # Salvando as Informações do MQTT:
@@ -113,62 +111,75 @@ def mqttCreateReservations(client, action: str, vehicleData: dict):
             if not response_task.ok:
                 success = False
                 break
-        # Verificando Se Todas as Respostas Foram de Sucesso:
+        # Ao Conseguir Todas As Reservas, Elas Serão Confirmadas
+        # Ao Contrário, Elas Serão Canceladas:
+        data = {
+            "vehicleID": vehicleID,
+            "accountNumber": accountNumber
+        }
         if success:
-            client.publish(publisherTopic, str({"success": vehicleID}))
-            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/confirm_res', json=json, timeout=5)
-            print(f"Todas as Reservas Para o Veículo '{vehicleID}' Foram Agendadas Com Sucesso!\n")
+            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/confirm_res', json=data, timeout=5)
+            if response.ok:
+                client.publish(publisherTopic, str({"success": vehicleID}))
+                print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
+            else:
+                client.publish(publisherTopic, str({"error": vehicleID}))
+                print(f"Erro ao Confirmar as Reservas Pendentes Para o Veículo '{vehicleID}': {response.text}\n")
         else:
-            client.publish(publisherTopic, str({"error": vehicleID}))
-            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/cancel_res', json=json, timeout=5)
-            print(f"Alguns Servidores Retornaram Erro nas Reservas Para o Veículo '{vehicleID}'.")
-    # Tratando as Exceções, Se o Servidor Não Responder:
+            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/cancel_res', json=data, timeout=5)
+            if response.ok:
+                client.publish(publisherTopic, str({"error": vehicleID}))
+                print(f"Reservas Pendentes Canceladas Para o Veículo '{vehicleID}', Pois a Requisição Atômica Não Foi Satisfeita!")
+            else:
+                client.publish(publisherTopic, str({"error": vehicleID}))
+                print(f"Alguns Servidores Retornaram Erro ao Cancelar as Reservas Pendentes Para o Veículo '{vehicleID}'!")
+    # Tratando as Exceções, Se os Servidores Não Responderem:
     except Exception as e:
         client.publish(publisherTopic, str({"error": vehicleID}))
-        print(f"Erro no Agendamento das Reservas: {e}\n")
+        print(f"Erro no Agendamento das Reservas Para o Veículo '{vehicleID}': {e}\n")
 
 # Função Para Inicializar Uma Sessão de Carregamento:
-def mqttStartCS(client, action: str, json: dict):
+def mqttStartCS(client, action: str, data: dict):
     publisherTopic = findPublisherTopic(action, "vehicle")
     if publisherTopic:
         # Solicitando a Inicialização da Sessão de Carregamento Através da API Local:
         try:
-            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/start_cs', json=json, timeout=5)
+            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/start_cs', json=data, timeout=5)
             if response.ok:
-                client.publish(publisherTopic, str({"success": json["reservationID"]}))
+                client.publish(publisherTopic, str({"success": data["reservationID"]}))
                 print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
             else:
                 try:
                     errorMessage = response.json().get("error")
                 except ValueError:
                     errorMessage = "Erro Desconhecido"
-                client.publish(publisherTopic, str({"error": json["reservationID"]}))
+                client.publish(publisherTopic, str({"error": data["reservationID"]}))
                 print(f"Erro na Inicialização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
         # Tratando as Exceções, Se o Servidor Não Responder:
         except Exception as e:
-            client.publish(publisherTopic, str({"error": json["reservationID"]}))
+            client.publish(publisherTopic, str({"error": data["reservationID"]}))
             print(f"Erro na Inicialização da Sessão de Carregamento: {e}\n")
 
 # Função Para Finalizar Uma Sessão de Carregamento:
-def mqttFinishCS(client, action: str, json: dict):
+def mqttFinishCS(client, action: str, data: dict):
     publisherTopic = findPublisherTopic(action, "vehicle")
     if publisherTopic:
-        # Solicitando a Finalização da Sessão de Carregamento Através da API do "Owner" da Blockchain:
+        # Solicitando a Finalização da Sessão de Carregamento Através da API Local:
         try:
-            response = requests.post(f'http://{OWNER_IP}:{OWNER_PORT}/finish_cs', json=json, timeout=5)
+            response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/finish_cs', json=data, timeout=5)
             if response.ok:
-                client.publish(publisherTopic, str({"success": json["reservationID"]}))
+                client.publish(publisherTopic, str({"success": data["reservationID"]}))
                 print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
             else:
                 try:
                     errorMessage = response.json().get("error")
                 except ValueError:
                     errorMessage = "Erro Desconhecido"
-                client.publish(publisherTopic, str({"error": json["reservationID"]}))
+                client.publish(publisherTopic, str({"error": data["reservationID"]}))
                 print(f"Erro na Finalização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
         # Tratando as Exceções, Se o Servidor Não Responder:
         except Exception as e:
-            client.publish(publisherTopic, str({"error": json["reservationID"]}))
+            client.publish(publisherTopic, str({"error": data["reservationID"]}))
             print(f"Erro na Finalização da Sessão de Carregamento: {e}\n")
 
 # Função "callback" ao Conectar-se ao Broker MQTT:

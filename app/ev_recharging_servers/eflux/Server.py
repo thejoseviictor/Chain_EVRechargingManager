@@ -1,16 +1,15 @@
-# Servidor da Empresa "EFlux", que Atua no Estado do Pernambuco -------------------------------------------------------------------------------------------------------
+# Servidor da Empresa "E-Flux", que Atua no Estado do Pernambuco ---------------------------------------------------------------------------------------------------------
 
 # Importando as Dependências:
 import os # Para Usar Variáveis de Ambiente.
 from flask import Flask, request, jsonify # Para Criar a API do Servidor e Seus End-Points.
-from web3 import Web3 # Para Comunicação com a Blockchain Ganache.
 import threading # Para Criar Múltiplas Instâncias.
 from ReservationsManager import ReservationsManager # Que Manipula a Persistência de Dados das Reservas.
 from ChargingStationsFile import ChargingStationsFile # Que Manipula a Persistência de Dados dos Postos de Recarga.
 import ReservationHelper # Funções para Gerar Parâmetros para Reservas.
 import mqttFunctions # Função para Configurar e Inicializar o MQTT.
 from ContractUtils import connectGanacheWeb3, getContractsAddresses, getContractData
-from ContractUtils import createReservationBlockchain, startChargingSession, markReservationAsPayed
+from ContractUtils import createReservationBlockchain, startChargingSession, finishChargingSession
 from ContractUtils import markReservationsAsConfirmed, markReservationsAsCanceled
 
 # Criando a Aplicação Flask:
@@ -45,10 +44,10 @@ company_accounts = {
 # Recebendo os Endereços dos Contratos pelo "Owner":
 contracts_addresses = getContractsAddresses()
 
-# Formatando os Endereços Para Objetos de Contrato:
-rl_contract = w3.eth.contract(address=contracts_addresses["ReservationLedger"], abi=getContractData("ReservationLedger"))
-escrow_contract = w3.eth.contract(address=contracts_addresses["Escrow"], abi=getContractData("Escrow"))
-csm_contract = w3.eth.contract(address=contracts_addresses["ChargingSessionManager"], abi=getContractData("ChargingSessionManager"))
+# Objetos dos Contratos:
+rl_contract = w3.eth.contract(address=contracts_addresses["ReservationLedger"], abi=getContractData("ReservationLedger")) # Reservas.
+csm_contract = w3.eth.contract(address=contracts_addresses["ChargingSessionManager"], abi=getContractData("ChargingSessionManager")) # Sessão de Carregamento.
+escrow_contract = w3.eth.contract(address=contracts_addresses["Escrow"], abi=getContractData("Escrow")) # Escrow de Pagamento.
 
 # Criando o Objeto de Manipulação das Reservas:
 reservationsManager = ReservationsManager(rl_contract)
@@ -58,10 +57,10 @@ reservationsManager = ReservationsManager(rl_contract)
 def createReservations():            
     # Tratando os Dados Recebidos:
     # Esperado: data = {"vehicleID": int, "batteryCapacity": float, "accountNumber": int, "reservationsRoute": list}
-    data = request.json
-    vehicleID = data.get('vehicleID') # ID do Veículo.
+    data = request.json # Recebendo os Dados em um Dicionário.
+    vehicleID = int(data.get('vehicleID')) # ID do Veículo.
     batteryCapacity = data.get('batteryCapacity') # Capacidade de Bateria do Veículo em kWh.
-    accountNumber = data.get('accountNumber') # Índice do Endereço da Carteira do Cliente na Blockchain.
+    accountNumber = int(data.get('accountNumber')) # Índice do Endereço da Carteira do Cliente na Blockchain.
     customerAddress = w3.eth.accounts[accountNumber] # Carteira do Cliente na Blockchain.
     reservationsRoute = data.get('reservationsRoute') # A Rota das Reservas.
 
@@ -101,8 +100,7 @@ def createReservations():
                         if not rs_status:
                             print(f"Não Foi Possível Realizar a Reserva em '{city["name"]}' Para o Veículo '{vehicleID}'\n")
                             return jsonify({"error": f"Não Foi Possível Realizar a Reserva em '{city["name"]}' Para o Veículo '{vehicleID}"}), 404 # Erro 404: Not Found
-                        lastReservationDuration = currentReservation["duration"] # Salvando a Duração Desta Reserva.
-    
+                        lastReservationDuration = currentReservation["durationHours"] # Salvando a Duração Desta Reserva.
     # Retorno de Sucesso:
     return f"Sucesso ao Realizas as Reservas do Veículo '{vehicleID}'", 200
 
@@ -110,10 +108,11 @@ def createReservations():
 @app.route('/confirm_res', methods=['POST'])
 def confirmReservations():
     # Tratando os Dados Recebidos:
-    # Esperado: data = {"vehicleID": int, "customerAddress": hex}
-    data = request.json # Recebendo os Dados em um Dicionário.
-    vehicleID = data.get('vehicleID')
-    customerAddress = data.get('customerAddress')
+    # Esperado: data = {"vehicleID": int, "accountNumber": int}
+    data = request.json
+    vehicleID = int(data.get('vehicleID'))
+    accountNumber = int(data.get('accountNumber'))
+    customerAddress = w3.eth.accounts[accountNumber] # Carteira do Cliente na Blockchain.
     # Solicitando as Confirmações e Escrows das Reservas na Blockchain:
     confirmed = markReservationsAsConfirmed(w3, rl_contract, escrow_contract, company_accounts[f"{companyName.lower()}"], customerAddress, company_accounts)
     if confirmed:
@@ -125,12 +124,14 @@ def confirmReservations():
 @app.route('/cancel_res', methods=['POST'])
 def cancelReservations():
     # Tratando os Dados Recebidos:
-    # Esperado: data = {"vehicleID": int, "customerAddress": hex}
-    data = request.json # Recebendo os Dados em um Dicionário.
-    vehicleID = data.get('vehicleID')
-    customerAddress = data.get('customerAddress')
-    confirmed = markReservationsAsCanceled(w3, rl_contract, company_accounts[f"{companyName.lower()}"], customerAddress)
-    if confirmed:
+    # Esperado: data = {"vehicleID": int, "accountNumber": int}
+    data = request.json
+    vehicleID = int(data.get('vehicleID'))
+    accountNumber = int(data.get('accountNumber'))
+    customerAddress = w3.eth.accounts[accountNumber] # Carteira do Cliente na Blockchain.
+    # Solicitando os Cancelamentos das Reservas na Blockchain:
+    cancelled = markReservationsAsCanceled(w3, rl_contract, company_accounts[f"{companyName.lower()}"], customerAddress)
+    if cancelled:
         return f"Sucesso ao Cancelar as Reservas do Veículo '{vehicleID}'", 200
     else:
         return jsonify({"error": "Erro Genérico!"}), 500
@@ -140,14 +141,26 @@ def cancelReservations():
 def startCS():
     # Tratando os Dados Recebidos:
     # Esperado: data = {"reservationID": int}
-    data = request.json # Recebendo os Dados em um Dicionário.
-    reservationID = data.get('reservationID')
+    data = request.json
+    reservationID = int(data.get('reservationID'))
     # Solicitando a Inicialização da Sessão de Carregamento na Blockchain:
     started = startChargingSession(w3, csm_contract, company_accounts[f"{companyName.lower()}"], reservationID)
-    # Solicitando a Atualização do Status da Reserva Para "PAYED":
-    rs_status = markReservationAsPayed(w3, rl_contract, company_accounts[f"{companyName.lower()}"], reservationID)
-    if started and rs_status:
+    if started:
         return f"Sucesso ao Iniciar a Sessão de Carregamento da Reserva '{reservationID}'", 200
+    else:
+        return jsonify({"error": "Erro Genérico!"}), 500
+
+# Rota Para Finalizar uma Sessão de Carregamento:
+@app.route('/finish_cs', methods=['POST'])
+def finishCS():
+    # Tratando os Dados Recebidos:
+    # Esperado: data = {"reservationID": int}
+    data = request.json
+    reservationID = int(data.get('reservationID'))
+    # Solicitando a Finalização da Sessão de Carregamento na Blockchain:
+    finished = startChargingSession(w3, csm_contract, company_accounts[f"{companyName.lower()}"], reservationID)
+    if finished:
+        return f"Sucesso ao Finalizar a Sessão de Carregamento da Reserva '{reservationID}'", 200
     else:
         return jsonify({"error": "Erro Genérico!"}), 500
 
