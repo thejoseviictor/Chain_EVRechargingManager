@@ -127,6 +127,7 @@ class ReservationsManager:
                 "chargingPointID": int(reservationObj.chargingPointID),
                 "cityCodename": str(reservationObj.cityCodename),
                 "companyName": str(reservationObj.companyName),
+                "durationHours": reservationObj.durationHours,
                 "startTimestamp": int(datetime.datetime.fromisoformat(reservationObj.startDateISO).timestamp()),
                 "finishTimestamp": int(datetime.datetime.fromisoformat(reservationObj.finishDateISO).timestamp()),
                 "price": int(Web3.to_wei(reservationObj.price, 'ether')),
