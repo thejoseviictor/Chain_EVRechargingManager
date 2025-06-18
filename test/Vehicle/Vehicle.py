@@ -23,6 +23,7 @@ MQTT_TOPICS_SUBSCRIBER = {
 
 vehicle_account_index = 1
 execution_step = 0
+reservationsList = []
 
 # Caminho dos Contratos:
 CONTRACTS_DIR = 'build/contracts/'
@@ -84,8 +85,8 @@ def mqttScheduleReservations(client):
     client.publish("vehicle/create_reservations/server", json.dumps(data))
 
 def depositFunds():
+    global reservationsList
     vehicle_account = w3.eth.accounts[vehicle_account_index]
-    reservationsList = []
     rl_contract = w3.eth.contract(address=contracts_addresses["ReservationLedger"], abi=getContractData("ReservationLedger")) # Reservas.
     escrow_contract = w3.eth.contract(address=contracts_addresses["Escrow"], abi=getContractData("Escrow")) # Escrow de Pagamento.
     assert Web3.is_address(vehicle_account), "Endereço da Conta do Veículo Inválido!\n"
@@ -123,16 +124,18 @@ def depositFunds():
         w3.eth.wait_for_transaction_receipt(tx_hash)
 
 def mqttStartCS(client):
-    data = {
-        "reservationID": 1,
-    }
-    client.publish("vehicle/start_charging_session/server", json.dumps(data))
+    for rs in reservationsList:
+        data = {
+            "reservationID": rs["reservationID"],
+        }
+        client.publish("vehicle/start_charging_session/server", json.dumps(data))
 
 def mqttFinishCS(client):
-    data = {
-        "reservationID": 1,
-    }
-    client.publish("vehicle/end_charging_session/server", json.dumps(data))
+    for rs in reservationsList:
+        data = {
+            "reservationID": rs["reservationID"],
+        }
+        client.publish("vehicle/end_charging_session/server", json.dumps(data))
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
