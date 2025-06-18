@@ -64,15 +64,6 @@ def showAccountsBalance():
     balance_wei = w3.eth.get_balance(w3.eth.accounts[3])
     balance_eth = w3.from_wei(balance_wei, 'ether')
     print(f"Saldo da Conta do Veículo 3: {balance_wei} wei ({balance_eth} ETH)\n")
-    balance_wei = w3.eth.get_balance(w3.eth.accounts[4])
-    balance_eth = w3.from_wei(balance_wei, 'ether')
-    print(f"Saldo da Conta do Veículo 4: {balance_wei} wei ({balance_eth} ETH)\n")
-    balance_wei = w3.eth.get_balance(w3.eth.accounts[5])
-    balance_eth = w3.from_wei(balance_wei, 'ether')
-    print(f"Saldo da Conta do Veículo 5: {balance_wei} wei ({balance_eth} ETH)\n")
-    balance_wei = w3.eth.get_balance(w3.eth.accounts[6])
-    balance_eth = w3.from_wei(balance_wei, 'ether')
-    print(f"Saldo da Conta do Veículo 6: {balance_wei} wei ({balance_eth} ETH)\n")
     # Exibindo o Balanço do Servidor "EcoCharge":
     balance_wei = w3.eth.get_balance(ecocharge_account)
     balance_eth = w3.from_wei(balance_wei, 'ether')
@@ -184,19 +175,13 @@ def on_message(client, userdata, message):
         mqttScheduleReservations(client, 1)
         mqttScheduleReservations(client, 2)
         mqttScheduleReservations(client, 3)
-        mqttScheduleReservations(client, 4)
-        mqttScheduleReservations(client, 5)
-        mqttScheduleReservations(client, 6)
-        time.sleep(30)
+        time.sleep(15)
 
     elif topic_action == "create_reservations" and execution_step == 1:
         time.sleep(2)
         depositFunds(1)
         depositFunds(2)
         depositFunds(3)
-        depositFunds(4)
-        depositFunds(5)
-        depositFunds(6)
         execution_step = 2
         mqttStartCS(client)
 
