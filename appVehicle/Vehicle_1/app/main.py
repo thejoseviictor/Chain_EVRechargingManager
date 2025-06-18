@@ -240,6 +240,8 @@ while(repeat):
 
         if reply == "1" : # Opção 1: Realizar reserva
 
+            contract_reservation_ledger = contracts_addresses["ReservationLedger"]
+
             wrongCities = True
 
             while wrongCities:
@@ -279,7 +281,6 @@ while(repeat):
             
         elif reply == "2" : # Opção 2: Ver reservas
 
-            contract_reservation_ledger = contracts_addresses["ReservationLedger"]
 
             vehicle.showReservations(w3, account_address, contract_reservation_ledger, reservation_ledger_abiFilePath)
             utility.writeReplyBack(wrongActions, repeat)
