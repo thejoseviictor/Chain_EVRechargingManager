@@ -50,7 +50,6 @@ BASE_DIR = Path(__file__).resolve().parent # Caminho do script "main.py"
 DATA_PATH = BASE_DIR / 'dataPath' # Caminho da pasta "dataPath"
 
 #Definindo o caminho de cada arquivo de dados
-dataFilePath = str(DATA_PATH / 'data.json')
 reservationsFilePath = str(DATA_PATH / 'reservations.json')
 reservation_ledger_abiFilePath = str(DATA_PATH / 'reservation_ledger_abi.json')
 escrow_abi_FilePath = str(DATA_PATH / 'escrow_abi.json')
@@ -142,11 +141,6 @@ maximumBattery = random.randint(51,100) # A capacidade máxima da bateria é ger
 
 vehicle = Vehicle(vid = vid, owner = owner, licensePlate = licensePlate, moneyCredit = moneyCredit, currentEnergy = currentEnergy, maximumBattery = maximumBattery)
 
-# ---------------------------------------------------------------------------------------------
-        
-vehicle.savingLoginData(dataFilePath) # Salvando os dados pertinentes
-# obs: O arquivo "data.json" tem os dados salvos
-
 #------------------------------------------------------------------------------------------------
 # Definindo conexão MQTT 
 
@@ -178,10 +172,10 @@ while(repeat):
 
     wrongData = True  # Váriavel usada para permitir ou não a entrada no sistema de acordo com os dados de login e senha
 
-    ownerTemplate = User(cpf="", name="", email="", password="")
-    vehicleTemplate = Vehicle( vid= "", owner= ownerTemplate, licensePlate= "", moneyCredit= 0.0, currentEnergy= 0, maximumBattery=0)
+    #ownerTemplate = User(cpf="", name="", email="", password="")
+    #vehicleTemplate = Vehicle( vid= "", owner= ownerTemplate, licensePlate= "", moneyCredit= 0.0, currentEnergy= 0, maximumBattery=0)
             
-    vehicleTemplate.loadingData(dataFilePath)
+    #vehicleTemplate.loadingData(dataFilePath)
 
     if firstLogin :
 
@@ -193,16 +187,16 @@ while(repeat):
                 
         while(wrongData):
 
-            print(vehicleTemplate.owner.__dict__) # Printando as informações necessárias para LOGIN
+            print(vehicle.owner.__dict__) # Printando as informações necessárias para LOGIN
             login = input("\n LOGIN (CPF ou Email): \t ")
             utility.clearTerminal()
 
-            print(vehicleTemplate.owner.__dict__)
+            print(vehicle.owner.__dict__)
             password = input("\n SENHA: ")
             utility.clearTerminal()
 
             # Conferindo se os dados de login estão corretos
-            if (login == vehicleTemplate.owner.cpf or login == vehicleTemplate.owner.email) and password == vehicleTemplate.owner.password:
+            if (login == vehicle.owner.cpf or login == vehicle.owner.email) and password == vehicle.owner.password:
                     print (" Login realizado com sucesso ! ")
                     time.sleep(3)
                     utility.clearTerminal()

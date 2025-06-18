@@ -107,68 +107,6 @@ class Vehicle:
             print(r) 
             print('----------------------------------------------------------')
 
-
-    def savingLoginData(self, dataFilePath: str): # Método para salvar novos dados gerados na opção "2 - CRIAR CONTA"
-
-            data = {
-                
-                "cpf" : self.owner.cpf ,
-                "name" : self.owner.name ,
-                "email" : self.owner.email ,
-                "password" : self.owner.password ,
-                "vid" : self.vid ,
-                "licensePlate" : self.licensePlate ,
-                "moneyCredit" : self.moneyCredit ,
-                "currentEnergy" : self.currentEnergy ,
-                "maximumBattery" : self.maximumBattery
-
-            }
-
-            
-            with open(dataFilePath, 'w') as f:
-                json.dump(data, f, indent=4)
-
-    def updateCredit(self, dataFilePath: str, value: float, operation: str):
-
-        credit = self.moneyCredit
-
-        if operation == "-":
-
-            credit -= value
-            self.moneyCredit = credit
-        
-        else:
-            credit += value
-            self.moneyCredit = credit
-
-
-        with open(dataFilePath, 'r') as f:
-            data = json.load(f)
-                
-        data["moneyCredit"] = credit
-
-        with open(dataFilePath, 'w') as f:
-            json.dump(data, f, indent=4)
-
-        print(f"Saldo atual: R${self.moneyCredit:.2f}")
-        time.sleep(3)
-        self.utility.clearTerminal()
-
-    def loadingData(self, dataFilePath: str): # Método para carregar dados de conta (dados gerados e salvos anteriormente)
-
-            with open(dataFilePath, 'r') as f:
-                data = json.load(f)
-                    
-            self.owner.cpf = str(data["cpf"])
-            self.owner.name = str(data["name"])
-            self.owner.email = str(data["email"])
-            self.owner.password = str(data["password"]) 
-            self.vid = str(data["vid"])
-            self.licensePlate = str(data["licensePlate"]) 
-            self.moneyCredit = float(data["moneyCredit"])
-            self.currentEnergy = int(data["currentEnergy"])
-            self.maximumBattery = int(data["maximumBattery"])
-            
     
     def manageRecharge(self, type_recharge: str, ID_reservation: str):
         
