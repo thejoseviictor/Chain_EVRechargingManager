@@ -21,6 +21,7 @@ MQTT_TOPICS_SUBSCRIBER = {
     "server/end_charging_session/vehicle"
 }
 
+vehicle_account_index = 1
 execution_step = 0
 
 # Caminho dos Contratos:
@@ -48,19 +49,42 @@ while True:
 def mqttReceiveContractsAddresses(client):
     client.publish("vehicle/contracts_addresses/server", str("OK"))
 
+def showAccountsBalance():
+    # Salvando os Endereços das Contas:
+    vehicle_account = w3.eth.accounts[vehicle_account_index]
+    ecocharge_account = w3.eth.accounts[os.environ.get('ECOCHARGE_ACCOUNT')]
+    eflux_account = w3.eth.accounts[os.environ.get('EFLUX_ACCOUNT')]
+    voltpoint_account = w3.eth.accounts[os.environ.get('VOLTPOINT_ACCOUNT')]
+    # Exibindo o Balanço do Veículo:
+    balance_wei = w3.eth.get_balance(vehicle_account)
+    balance_eth = w3.from_wei(balance_wei, 'ether')
+    print(f"Saldo da Conta do Veículo: {balance_wei} wei ({balance_eth} ETH)\n")
+    # Exibindo o Balanço do Servidor "EcoCharge":
+    balance_wei = w3.eth.get_balance(ecocharge_account)
+    balance_eth = w3.from_wei(balance_wei, 'ether')
+    print(f"Saldo da Conta da Empresa 'EcoCharge': {balance_wei} wei ({balance_eth} ETH)\n")
+    # Exibindo o Balanço do Servidor "E-FLux":
+    balance_wei = w3.eth.get_balance(eflux_account)
+    balance_eth = w3.from_wei(balance_wei, 'ether')
+    print(f"Saldo da Conta da Empresa 'E-Flux': {balance_wei} wei ({balance_eth} ETH)\n")
+    # Exibindo o Balanço do Servidor "VoltPoint":
+    balance_wei = w3.eth.get_balance(voltpoint_account)
+    balance_eth = w3.from_wei(balance_wei, 'ether')
+    print(f"Saldo da Conta da Empresa 'EcoCharge': {balance_wei} wei ({balance_eth} ETH)\n")
+
 def mqttScheduleReservations(client):
     data = {
-        "vehicleID": 1,
+        "vehicleID": vehicle_account_index,
         "actualBatteryPercentage": 100,
         "batteryCapacity": 51,
         "departureCityCodename": "v_conquista",
         "arrivalCityCodename": "fortaleza",
-        "accountNumber": 1
+        "accountNumber": vehicle_account_index
     }
     client.publish("vehicle/create_reservations/server", json.dumps(data))
 
 def depositFunds():
-    vehicle_account = w3.eth.accounts[1]
+    vehicle_account = w3.eth.accounts[vehicle_account_index]
     reservationsList = []
     rl_contract = w3.eth.contract(address=contracts_addresses["ReservationLedger"], abi=getContractData("ReservationLedger")) # Reservas.
     escrow_contract = w3.eth.contract(address=contracts_addresses["Escrow"], abi=getContractData("Escrow")) # Escrow de Pagamento.
@@ -81,6 +105,8 @@ def depositFunds():
             "recipient": res[9],
             "status": res[10]
         }
+        print(f"Informações da Reserva '{reservation["reservationID"]}':\n")
+        print(json.dumps(res_dict, indent=4)) # Printando a Reserva.
         reservationsList.append(res_dict)
     # Exibindo Mensagem de Sucesso:
     print(f"{len(reservationsList)} Reservas Recuperadas da Blockchain Para Memória de Trabalho.\n")
@@ -130,8 +156,11 @@ def on_message(client, userdata, message):
         topic_action = "unknown"
 
     if topic_action == "contracts_addresses":
+        # Exibindo o Balanço das Contas:
+        showAccountsBalance()
+        # Executando os Passos Seguintes:
         contracts_addresses = json.loads(decodedMessage)
-        execution_step = 1  # Avança para o próximo passo
+        execution_step = 1  # Avançando Para o Próximo Passo.
         time.sleep(2)
         mqttScheduleReservations(client)
 
@@ -146,6 +175,8 @@ def on_message(client, userdata, message):
         execution_step = 3
 
     elif topic_action == "end_charging_session" and execution_step == 3:
+        # Exibindo o Balanço das Contas:
+        showAccountsBalance()
         print("Processo Finalizado com Sucesso!")
 
 def on_publish(client, userdata, mid):
