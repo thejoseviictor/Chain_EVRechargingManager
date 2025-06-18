@@ -17,7 +17,7 @@ class VehicleClient:
         
         self.client = client
         self.serverHOST = 'localhost'
-        self.serverPORT = 62325 #1883
+        self.serverPORT = 64035
         self.cost = 0.0
         self.type_subscribe = type_subscribe
         self.ID_reservation = ID_reservation

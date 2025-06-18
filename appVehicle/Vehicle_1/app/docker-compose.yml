@@ -17,6 +17,8 @@ services:
     ports:
       - '8545:8545'
     environment:
+      MQTT_HOST : 'localhost'
+      MQTT_PORT : 64035
       GANACHE_URL: "http://localhost:8545" # URL de acesso ao docker ganache
       ACCOUNT_NUMBER: "1" # Indice de conta ganache, deve ser alterado para cada veículo criado
     

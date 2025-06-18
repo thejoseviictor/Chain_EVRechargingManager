@@ -68,7 +68,7 @@ ganache_URL = os.environ.get("GANACHE_URL")
 
 an = os.environ.get("ACCOUNT_NUMBER")
 
-account_number = 1
+account_number = 0
 
 if an:
     account_number = int(an) # Número da conta Ganache utilizada pelo respectivo veículo(0-9). Deve ser alterado no docker-compose para cada conta nova de veículo.
@@ -272,6 +272,10 @@ while(repeat):
                     type_subscribe = '2'
                     vClient = VehicleClient(client_MQTT, vehicle, route, account_number, ID_reservation, type_subscribe)
 
+                    vehicle.showReservations(w3, account_address, contract_reservation_ledger, reservation_ledger_abiFilePath)
+                    contract_escrow_address = contracts_addresses["Escrow"]
+                    vehicle.payRecharge(w3, account_address, contract_escrow_address, escrow_abi_FilePath)
+
             
         elif reply == "2" : # Opção 2: Ver reservas
 
@@ -308,15 +312,12 @@ while(repeat):
 
             elif answer_recharge == '2':
                 
-                contract_escrow_address = contracts_addresses["Escrow"]
 
                 vehicle.showRecharges()
 
                 ID_reservation = input ('Digite o ID da reserva que deseja finalizar a recarga : \n\t ->')
 
                 utility.clearTerminal()
-
-                vehicle.payRecharge(w3, account_address, contract_escrow_address, escrow_abi_FilePath)
 
                 type_subscribe = '4'
                 vClient = VehicleClient(client_MQTT, vehicle, route, account_number, ID_reservation, type_subscribe)

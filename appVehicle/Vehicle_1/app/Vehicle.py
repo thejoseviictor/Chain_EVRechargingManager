@@ -51,9 +51,19 @@ class Vehicle:
 
         contractAddress = w3.to_checksum_address(contract_address)
 
-        contract = w3.eth.contract(address=contractAddress, abi=abi)
+        escrow_contract = w3.eth.contract(address=contractAddress, abi=abi)
 
-
+        for r in self.reservationsList:
+            
+            tx_hash = escrow_contract.functions.depositFunds(r["reservationID"]).transact({
+            'from': account_address, # Endereço do Carro
+            'value': int( r["price"] ), # Preço em "wei", Presente nas Informações da Reserva
+            "nonce": w3.eth.get_transaction_count(account_address),
+            'gasPrice': w3.eth.gas_price,
+            "gas": 125000,
+            "chainId": w3.eth.chain_id
+        })
+        w3.eth.wait_for_transaction_receipt(tx_hash)
 
 
     def showReservations(self, w3, account_address, contract_address, abiFilePath): # Método para visualizar todas as reservas efetuadas para o veículo na blockchain
@@ -94,7 +104,7 @@ class Vehicle:
 
         for r in self.reservationsList:
 
-            print(r) # Mudar a exibição
+            print(r) 
             print('----------------------------------------------------------')
 
 
