@@ -3,6 +3,7 @@ import json
 from web3 import Web3
 import time
 import os
+import datetime
 
 GANACHE_URL = os.environ.get('GANACHE_URL')
 BROKER_IP = os.environ.get('MQTT_BROKER_HOST')
@@ -19,6 +20,17 @@ MQTT_TOPICS_SUBSCRIBER = {
     "server/start_charging_session/vehicle",
     "server/end_charging_session/vehicle"
 }
+
+# Caminho dos Contratos:
+CONTRACTS_DIR = 'build/contracts/'
+
+# Carregando o "ABI" de Um Contrato Compilado:
+def getContractData(contract_name: str):
+    with open(f"{CONTRACTS_DIR}{contract_name}.abi", 'r') as abi_file:
+        abi = json.loads(abi_file.read()) # Lendo Como Dicionário.
+    return abi
+
+contracts_addresses = {}
 
 while True:
     try:
@@ -46,7 +58,41 @@ def mqttScheduleReservations(client):
     client.publish("vehicle/create_reservations/server", json.dumps(data))
 
 def depositFunds():
-    pass
+    vehicle_account = w3.eth.accounts[1]
+    reservationsList = []
+    rl_contract = w3.eth.contract(address=contracts_addresses["ReservationLedger"], abi=getContractData("ReservationLedger")) # Reservas.
+    escrow_contract = w3.eth.contract(address=contracts_addresses["Escrow"], abi=getContractData("Escrow")) # Escrow de Pagamento.
+    assert Web3.is_address(vehicle_account), "Endereço da Conta do Veículo Inválido!\n"
+    reservations = rl_contract.functions.getReservationsByCustomer(vehicle_account).call()
+    # Convertendo a Tupla de Reservas para Dicionário:
+    for res in reservations:
+        res_dict = {
+            "reservationID": res[0],
+            "chargingStationID": res[1],
+            "chargingPointID": res[2],
+            "cityCodename": res[3],
+            "companyName": res[4],
+            "startTimestamp": datetime.datetime.fromtimestamp(res[5]).isoformat(),
+            "finishTimestamp": datetime.datetime.fromtimestamp(res[6]).isoformat(),
+            "price": res[7],
+            "customer": res[8],
+            "recipient": res[9],
+            "status": res[10]
+        }
+        reservationsList.append(res_dict)
+    # Exibindo Mensagem de Sucesso:
+    print(f"{len(reservationsList)} Reservas Recuperadas da Blockchain Para Memória de Trabalho.\n")
+    for reservation in reservationsList:
+        print(f"Depositando o Pagamento Para a Reserva '{reservation["reservationID"]}'!\n")
+        tx_hash = escrow_contract.functions.depositFunds(reservation["reservationID"]).transact({
+            'from': vehicle_account, # Endereço do Carro
+            'value': reservation["price"], # Preço em "wei", Presente nas Informações da Reserva
+            "nonce": w3.eth.get_transaction_count(vehicle_account),
+            'gasPrice': w3.eth.gas_price,
+            "gas": 125000,
+            "chainId": w3.eth.chain_id
+        })
+        w3.eth.wait_for_transaction_receipt(tx_hash)
 
 def mqttStartCS(client):
     data = {
@@ -73,8 +119,19 @@ def on_connect(client, userdata, flags, rc):
     else:
         print(f"Falha na Conexão! Código de Retorno: {rc}\n")
 
-def on_message(client, userdata, msg):
-    print(f"[Recebido] Tópico: {msg.topic} | Mensagem: {msg.payload.decode()}\n")
+def on_message(client, userdata, message):
+    global contracts_addresses
+    decodedMessage = message.payload.decode() # Decodificando a Mensagem, Convertendo Bytes em String.
+    print("Mensagem MQTT Recebida:")
+    print(f"{decodedMessage}\n")
+    # Salvando o Tópico e Separando a Ação:
+    topic = message.topic.split("/") # Salvando as Partes do Tópico em uma Lista: ["from", "action", "to"]
+    if len(topic) == 3: # Formato de Tópico Conhecido: ["from", "action", "to"]
+        topic_action = topic[1] # Salvando a Ação do Tópico.
+    else:
+        topic_action = "unknown" # Formato de Tópico Desconhecido.
+    if topic_action == "contracts_addresses":
+        contracts_addresses = json.loads(decodedMessage)
 
 def on_publish(client, userdata, mid):
     print("Mensagem Publicada Com Sucesso!\n")

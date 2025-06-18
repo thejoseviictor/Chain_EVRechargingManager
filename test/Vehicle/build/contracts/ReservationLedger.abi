@@ -1,0 +1,491 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_authorizedServersAddress",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint16",
+				"name": "reservationID",
+				"type": "uint16"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "customer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "recipient",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "cityCodename",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint72",
+				"name": "price",
+				"type": "uint72"
+			}
+		],
+		"name": "ReservationCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint16",
+				"name": "reservationID",
+				"type": "uint16"
+			},
+			{
+				"indexed": false,
+				"internalType": "enum ReservationLedger.Status",
+				"name": "status",
+				"type": "uint8"
+			}
+		],
+		"name": "ReservationStatusUpdated",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "authorizedServers",
+		"outputs": [
+			{
+				"internalType": "contract AuthorizedServers",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "_reservationID",
+				"type": "uint16"
+			}
+		],
+		"name": "cancelReservation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "_reservationID",
+				"type": "uint16"
+			}
+		],
+		"name": "confirmReservation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint8",
+				"name": "_chargingStationID",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint8",
+				"name": "_chargingPointID",
+				"type": "uint8"
+			},
+			{
+				"internalType": "string",
+				"name": "_cityCodename",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_companyName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint32",
+				"name": "_startTimestamp",
+				"type": "uint32"
+			},
+			{
+				"internalType": "uint32",
+				"name": "_finishTimestamp",
+				"type": "uint32"
+			},
+			{
+				"internalType": "uint72",
+				"name": "_price",
+				"type": "uint72"
+			},
+			{
+				"internalType": "address",
+				"name": "_customerAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_companyAddress",
+				"type": "address"
+			}
+		],
+		"name": "createReservation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getAllReservations",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint16",
+						"name": "reservationID",
+						"type": "uint16"
+					},
+					{
+						"internalType": "uint8",
+						"name": "chargingStationID",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "chargingPointID",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "cityCodename",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "companyName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint32",
+						"name": "startTimestamp",
+						"type": "uint32"
+					},
+					{
+						"internalType": "uint32",
+						"name": "finishTimestamp",
+						"type": "uint32"
+					},
+					{
+						"internalType": "uint72",
+						"name": "price",
+						"type": "uint72"
+					},
+					{
+						"internalType": "address payable",
+						"name": "customer",
+						"type": "address"
+					},
+					{
+						"internalType": "address payable",
+						"name": "recipient",
+						"type": "address"
+					},
+					{
+						"internalType": "enum ReservationLedger.Status",
+						"name": "status",
+						"type": "uint8"
+					}
+				],
+				"internalType": "struct ReservationLedger.Reservation[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "_reservationID",
+				"type": "uint16"
+			}
+		],
+		"name": "getReservation",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint16",
+						"name": "reservationID",
+						"type": "uint16"
+					},
+					{
+						"internalType": "uint8",
+						"name": "chargingStationID",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "chargingPointID",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "cityCodename",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "companyName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint32",
+						"name": "startTimestamp",
+						"type": "uint32"
+					},
+					{
+						"internalType": "uint32",
+						"name": "finishTimestamp",
+						"type": "uint32"
+					},
+					{
+						"internalType": "uint72",
+						"name": "price",
+						"type": "uint72"
+					},
+					{
+						"internalType": "address payable",
+						"name": "customer",
+						"type": "address"
+					},
+					{
+						"internalType": "address payable",
+						"name": "recipient",
+						"type": "address"
+					},
+					{
+						"internalType": "enum ReservationLedger.Status",
+						"name": "status",
+						"type": "uint8"
+					}
+				],
+				"internalType": "struct ReservationLedger.Reservation",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_customerAddress",
+				"type": "address"
+			}
+		],
+		"name": "getReservationsByCustomer",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint16",
+						"name": "reservationID",
+						"type": "uint16"
+					},
+					{
+						"internalType": "uint8",
+						"name": "chargingStationID",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint8",
+						"name": "chargingPointID",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "cityCodename",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "companyName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint32",
+						"name": "startTimestamp",
+						"type": "uint32"
+					},
+					{
+						"internalType": "uint32",
+						"name": "finishTimestamp",
+						"type": "uint32"
+					},
+					{
+						"internalType": "uint72",
+						"name": "price",
+						"type": "uint72"
+					},
+					{
+						"internalType": "address payable",
+						"name": "customer",
+						"type": "address"
+					},
+					{
+						"internalType": "address payable",
+						"name": "recipient",
+						"type": "address"
+					},
+					{
+						"internalType": "enum ReservationLedger.Status",
+						"name": "status",
+						"type": "uint8"
+					}
+				],
+				"internalType": "struct ReservationLedger.Reservation[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "_reservationID",
+				"type": "uint16"
+			}
+		],
+		"name": "markReservationAsPaid",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "nextReservationID",
+		"outputs": [
+			{
+				"internalType": "uint16",
+				"name": "",
+				"type": "uint16"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "",
+				"type": "uint16"
+			}
+		],
+		"name": "reservations",
+		"outputs": [
+			{
+				"internalType": "uint16",
+				"name": "reservationID",
+				"type": "uint16"
+			},
+			{
+				"internalType": "uint8",
+				"name": "chargingStationID",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint8",
+				"name": "chargingPointID",
+				"type": "uint8"
+			},
+			{
+				"internalType": "string",
+				"name": "cityCodename",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "companyName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint32",
+				"name": "startTimestamp",
+				"type": "uint32"
+			},
+			{
+				"internalType": "uint32",
+				"name": "finishTimestamp",
+				"type": "uint32"
+			},
+			{
+				"internalType": "uint72",
+				"name": "price",
+				"type": "uint72"
+			},
+			{
+				"internalType": "address payable",
+				"name": "customer",
+				"type": "address"
+			},
+			{
+				"internalType": "address payable",
+				"name": "recipient",
+				"type": "address"
+			},
+			{
+				"internalType": "enum ReservationLedger.Status",
+				"name": "status",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
