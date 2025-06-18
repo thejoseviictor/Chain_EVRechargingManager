@@ -21,6 +21,8 @@ MQTT_TOPICS_SUBSCRIBER = {
     "server/end_charging_session/vehicle"
 }
 
+execution_step = 0
+
 # Caminho dos Contratos:
 CONTRACTS_DIR = 'build/contracts/'
 
@@ -116,22 +118,33 @@ def on_connect(client, userdata, flags, rc):
         print(f"Falha na Conexão! Código de Retorno: {rc}\n")
 
 def on_message(client, userdata, message):
-    global contracts_addresses
-    decodedMessage = message.payload.decode() # Decodificando a Mensagem, Convertendo Bytes em String.
+    global contracts_addresses, execution_step
+    decodedMessage = message.payload.decode()
     print("Mensagem MQTT Recebida:")
     print(f"{decodedMessage}\n")
-    # Salvando o Tópico e Separando a Ação:
-    topic = message.topic.split("/") # Salvando as Partes do Tópico em uma Lista: ["from", "action", "to"]
-    if len(topic) == 3: # Formato de Tópico Conhecido: ["from", "action", "to"]
-        topic_action = topic[1] # Salvando a Ação do Tópico.
+
+    topic = message.topic.split("/")
+    if len(topic) == 3:
+        topic_action = topic[1]
     else:
-        topic_action = "unknown" # Formato de Tópico Desconhecido.
+        topic_action = "unknown"
+
     if topic_action == "contracts_addresses":
         contracts_addresses = json.loads(decodedMessage)
-    mqttScheduleReservations(client)
-    depositFunds()
-    mqttStartCS(client)
-    mqttFinishCS(client)
+        execution_step = 1  # Avança para o próximo passo
+
+    elif topic_action == "create_reservations" and execution_step == 1:
+        depositFunds()
+        execution_step = 2
+        time.sleep(5)
+        mqttStartCS(client)
+
+    elif topic_action == "start_charging_session" and execution_step == 2:
+        mqttFinishCS(client)
+        execution_step = 3
+
+    elif topic_action == "end_charging_session" and execution_step == 3:
+        print("Processo Finalizado com Sucesso!")
 
 def on_publish(client, userdata, mid):
     print("Mensagem Publicada Com Sucesso!\n")
