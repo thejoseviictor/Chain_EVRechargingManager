@@ -52,9 +52,9 @@ def mqttReceiveContractsAddresses(client):
 def showAccountsBalance():
     # Salvando os Endereços das Contas:
     vehicle_account = w3.eth.accounts[vehicle_account_index]
-    ecocharge_account = w3.eth.accounts[os.environ.get('ECOCHARGE_ACCOUNT')]
-    eflux_account = w3.eth.accounts[os.environ.get('EFLUX_ACCOUNT')]
-    voltpoint_account = w3.eth.accounts[os.environ.get('VOLTPOINT_ACCOUNT')]
+    ecocharge_account = w3.eth.accounts[int(os.environ.get('ECOCHARGE_ACCOUNT'))]
+    eflux_account = w3.eth.accounts[int(os.environ.get('EFLUX_ACCOUNT'))]
+    voltpoint_account = w3.eth.accounts[int(os.environ.get('VOLTPOINT_ACCOUNT'))]
     # Exibindo o Balanço do Veículo:
     balance_wei = w3.eth.get_balance(vehicle_account)
     balance_eth = w3.from_wei(balance_wei, 'ether')
