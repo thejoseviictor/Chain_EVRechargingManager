@@ -145,7 +145,7 @@ def markReservationsAsConfirmed(w3: Web3, rl_contract, escrow_contract, server_a
     res_list = reservationsManager.reservationsList
     # Percorrendo as Reservas:
     for res in res_list:
-        if int(res["customer"]) == int(customerAddress):
+        if str(res["customer"]) == str(customerAddress):
             try:
                 # Marcando a Reserva Como Confirmada:
                 print(f"Marcando Uma Reserva Como Confirmada: {int(res['reservationID'])}\n")
@@ -200,7 +200,7 @@ def markReservationsAsCanceled(w3: Web3, rl_contract, server_account, customerAd
     res_list = reservationsManager.reservationsList
     # Percorrendo as Reservas:
     for res in res_list:
-        if int(res["customer"]) == int(customerAddress):
+        if str(res["customer"]) == str(customerAddress):
             try:
                 # Marcando a Reserva Como Cancelada:
                 print(f"Marcando Uma Reserva Como Cancelada: {int(res['reservationID'])}\n")
