@@ -146,18 +146,18 @@ def mqttStartCS(client, action: str, data: dict):
         try:
             response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/start_cs', json=data, timeout=5)
             if response.ok:
-                client.publish(publisherTopic, str({"success": json["reservationID"]}))
+                client.publish(publisherTopic, str({"success": data["reservationID"]}))
                 print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
             else:
                 try:
                     errorMessage = response.json().get("error")
                 except ValueError:
                     errorMessage = "Erro Desconhecido"
-                client.publish(publisherTopic, str({"error": json["reservationID"]}))
+                client.publish(publisherTopic, str({"error": data["reservationID"]}))
                 print(f"Erro na Inicialização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
         # Tratando as Exceções, Se o Servidor Não Responder:
         except Exception as e:
-            client.publish(publisherTopic, str({"error": json["reservationID"]}))
+            client.publish(publisherTopic, str({"error": data["reservationID"]}))
             print(f"Erro na Inicialização da Sessão de Carregamento: {e}\n")
 
 # Função Para Finalizar Uma Sessão de Carregamento:
@@ -168,18 +168,18 @@ def mqttFinishCS(client, action: str, data: dict):
         try:
             response = requests.post(f'http://{SERVER_IP}:{SERVER_PORT}/finish_cs', json=data, timeout=5)
             if response.ok:
-                client.publish(publisherTopic, str({"success": json["reservationID"]}))
+                client.publish(publisherTopic, str({"success": data["reservationID"]}))
                 print(f"{response.text}\n") # Exibindo a Resposta de Sucesso.
             else:
                 try:
                     errorMessage = response.json().get("error")
                 except ValueError:
                     errorMessage = "Erro Desconhecido"
-                client.publish(publisherTopic, str({"error": json["reservationID"]}))
+                client.publish(publisherTopic, str({"error": data["reservationID"]}))
                 print(f"Erro na Finalização da Sessão de Carregamento ({response.status_code}): {errorMessage}\n")
         # Tratando as Exceções, Se o Servidor Não Responder:
         except Exception as e:
-            client.publish(publisherTopic, str({"error": json["reservationID"]}))
+            client.publish(publisherTopic, str({"error": data["reservationID"]}))
             print(f"Erro na Finalização da Sessão de Carregamento: {e}\n")
 
 # Função "callback" ao Conectar-se ao Broker MQTT:
