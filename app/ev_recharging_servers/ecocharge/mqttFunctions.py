@@ -225,15 +225,14 @@ def onMessage(client, userdata, message): # Assinatura Padrão da Função.
             jsonMessage = json.loads(decodedMessage) # Transformando a Mensagem em Dicionário.
             print(json.dumps(jsonMessage, indent=4)) # Mensagem Identada.
             print("\n")
-
-        # Verificando Se o Veículo Já Fez Uma Requisição, Para Evitar Duplicação:
-        now = time.time()
-        if jsonMessage["vehicleID"] in vehicleLastSeen:
-            elapsed = now - vehicleLastSeen[jsonMessage["vehicleID"]]
-            if elapsed < vehicleTimeOutSeconds:
-                print(f"Ignorando Mensagem Duplicada do Veículo '{jsonMessage["vehicleID"]}'!")
-                return
-        vehicleLastSeen[jsonMessage["vehicleID"]] = now
+            # Verificando Se o Veículo Já Fez Uma Requisição, Para Evitar Duplicação:
+            now = time.time()
+            if jsonMessage["vehicleID"] in vehicleLastSeen:
+                elapsed = now - vehicleLastSeen[jsonMessage["vehicleID"]]
+                if elapsed < vehicleTimeOutSeconds:
+                    print(f"Ignorando Mensagem Duplicada do Veículo '{jsonMessage["vehicleID"]}'!")
+                    return
+            vehicleLastSeen[jsonMessage["vehicleID"]] = now
 
         # Salvando o Tópico e Separando a Ação:
         topic = message.topic.split("/") # Salvando as Partes do Tópico em uma Lista: ["from", "action", "to"]
